@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { AICharacter, PRESET_CHARACTERS, API_PROVIDERS, CustomCharacterConfig } from '../types';
+import { AICharacter, PRESET_CHARACTERS, CustomCharacterConfig } from '../types';
+import { API_PROVIDERS } from '../types/apiProviders';
 
 interface CharacterSelectorProps {
   characters: AICharacter[];

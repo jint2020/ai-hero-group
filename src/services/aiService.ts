@@ -1,4 +1,4 @@
-import { API_PROVIDERS } from '../types';
+import { API_PROVIDERS } from '../types/apiProviders';
 
 // API调用服务
 export class AIService {
@@ -280,6 +280,74 @@ export class AIService {
   // 获取可用模型列表
   getAvailableModels(provider: 'siliconflow' | 'openrouter' | 'deepseek'): string[] {
     return API_PROVIDERS[provider]?.models || [];
+  }
+
+  // 动态获取 SiliconFlow 模型列表
+  async fetchSiliconFlowModels(apiKey: string): Promise<string[]> {
+    try {
+      const response = await fetch('https://api.siliconflow.cn/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`获取模型列表失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.data && Array.isArray(data.data)) {
+        // 提取模型ID，过滤出可用的模型
+        const models = data.data
+          .filter((model: any) => model.id && !model.id.includes('omni-'))
+          .map((model: any) => model.id)
+          .sort();
+        return models;
+      }
+
+      return API_PROVIDERS['siliconflow']?.models || [];
+    } catch (error) {
+      console.error('获取SiliconFlow模型列表失败:', error);
+      // 返回默认模型列表
+      return API_PROVIDERS['siliconflow']?.models || [];
+    }
+  }
+
+  // 动态获取 OpenRouter 模型列表
+  async fetchOpenRouterModels(apiKey: string): Promise<string[]> {
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'AI Conference'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`获取模型列表失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.data && Array.isArray(data.data)) {
+        // 提取模型ID，过滤出活跃的模型
+        const models = data.data
+          .filter((model: any) => model.id && model.context_length && model.pricing && model.pricing.prompt !== null)
+          .map((model: any) => model.id)
+          .sort();
+        return models;
+      }
+
+      return API_PROVIDERS['openrouter']?.models || [];
+    } catch (error) {
+      console.error('获取OpenRouter模型列表失败:', error);
+      // 返回默认模型列表
+      return API_PROVIDERS['openrouter']?.models || [];
+    }
   }
 
   // 验证API密钥格式

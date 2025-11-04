@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { API_PROVIDERS } from '../types';
+import { API_PROVIDERS } from '../types/apiProviders';
+import { DEFAULT_API_KEYS } from '../config/defaultConfig';
+import { aiService } from '../services/aiService';
+import { storageService } from '../services/storageService';
 
 interface ApiConfigProps {
   apiKeys: Record<string, string>;
@@ -16,14 +19,94 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
   const [customModels, setCustomModels] = useState(''); // 逗号分隔的模型列表
   const [customApiKey, setCustomApiKey] = useState('');
 
+  // 动态模型列表状态
+  const [dynamicModels, setDynamicModels] = useState<Record<string, string[]>>({});
+  const [isFetchingModels, setIsFetchingModels] = useState<Record<string, boolean>>({});
+  const [modelFetchError, setModelFetchError] = useState<Record<string, string | null>>({});
+
+  // 默认模型状态
+  const [defaultModels, setDefaultModels] = useState<Record<string, string>>({});
+
   useEffect(() => {
     setLocalKeys(apiKeys);
+    // 加载缓存的默认模型
+    const providers = ['siliconflow', 'openrouter', 'deepseek'];
+    const loadedDefaults: Record<string, string> = {};
+    providers.forEach(provider => {
+      loadedDefaults[provider] = storageService.loadDefaultModel(provider);
+    });
+    setDefaultModels(loadedDefaults);
   }, [apiKeys]);
 
   const handleKeyChange = (provider: string, value: string) => {
     const newKeys = { ...localKeys, [provider]: value };
     setLocalKeys(newKeys);
     onApiKeysChange(newKeys);
+  };
+
+  // 获取模型列表（优先使用动态获取）
+  const getModelList = (provider: string): string[] => {
+    if (dynamicModels[provider] && dynamicModels[provider].length > 0) {
+      return dynamicModels[provider];
+    }
+    return API_PROVIDERS[provider]?.models || [];
+  };
+
+  // 动态获取 SiliconFlow 模型列表
+  const fetchModels = async (provider: 'siliconflow' | 'openrouter' | 'deepseek') => {
+    const apiKey = localKeys[provider];
+    if (!apiKey) {
+      alert('请先输入API密钥');
+      return;
+    }
+
+    // 检查缓存
+    const cached = storageService.getCachedModels(provider);
+    if (cached) {
+      setDynamicModels(prev => ({ ...prev, [provider]: cached }));
+      console.log(`从缓存加载${provider}的${cached.length}个模型`);
+      return;
+    }
+
+    setIsFetchingModels(prev => ({ ...prev, [provider]: true }));
+    setModelFetchError(prev => ({ ...prev, [provider]: null }));
+
+    try {
+      let models: string[] = [];
+
+      if (provider === 'siliconflow') {
+        // SiliconFlow 支持动态获取
+        models = await aiService.fetchSiliconFlowModels(apiKey);
+      } else if (provider === 'openrouter') {
+        // OpenRouter 支持动态获取
+        models = await aiService.fetchOpenRouterModels(apiKey);
+      } else {
+        // 其他供应商使用默认列表
+        models = aiService.getAvailableModels(provider);
+      }
+
+      setDynamicModels(prev => ({ ...prev, [provider]: models }));
+      storageService.cacheModels(provider, models);
+
+      console.log(`成功获取${provider}的${models.length}个模型`);
+    } catch (error) {
+      console.error(`获取${provider}模型列表失败:`, error);
+      setModelFetchError(prev => ({
+        ...prev,
+        [provider]: error instanceof Error ? error.message : '获取模型列表失败'
+      }));
+      // 使用默认模型列表
+      const fallbackModels = aiService.getAvailableModels(provider);
+      setDynamicModels(prev => ({ ...prev, [provider]: fallbackModels }));
+    } finally {
+      setIsFetchingModels(prev => ({ ...prev, [provider]: false }));
+    }
+  };
+
+  // 设置默认模型
+  const handleSetDefaultModel = (provider: string, model: string) => {
+    storageService.saveDefaultModel(provider, model);
+    setDefaultModels(prev => ({ ...prev, [provider]: model }));
   };
 
   const toggleShowKey = (provider: string) => {
@@ -37,13 +120,29 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
       return;
     }
 
+    let testModel = defaultModels[provider];
+
+    // 对于 DeepSeek，检查是否输入了模型名称；对于其他提供商，检查可用模型列表
+    if (!testModel || testModel.trim() === '') {
+      if (provider === 'deepseek') {
+        alert('请先输入模型名称');
+        return;
+      } else {
+        const availableModels = getModelList(provider);
+        if (availableModels.length === 0) {
+          alert('没有可用的模型，请先点击获取模型列表');
+          return;
+        }
+        // 如果有模型列表但没有选择默认模型，使用第一个模型并保存到持久化存储
+        testModel = availableModels[0];
+        setDefaultModels(prev => ({ ...prev, [provider]: testModel }));
+        storageService.saveDefaultModel(provider, testModel);
+      }
+    }
+
     setTestResults(prev => ({ ...prev, [provider]: 'testing' }));
 
     try {
-      // 简单的格式验证
-      const models = API_PROVIDERS[provider].models;
-      const testModel = models[0]; // 使用第一个可用模型测试
-
       const response = await fetch(`${API_PROVIDERS[provider].baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -101,7 +200,45 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
         <span className="mr-2">⚙️</span>
         API配置
       </h2>
-      
+
+      {/* 默认配置信息提示 */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-blue-900/50 to-purple-900/50 border border-blue-400 rounded-lg">
+        <div className="flex items-start space-x-3">
+          <span className="text-2xl">ℹ️</span>
+          <div>
+            <h3 className="text-lg font-bold text-neon-blue mb-2">默认API配置</h3>
+            <div className="text-sm text-gray-300 space-y-2">
+              <p>系统已为您准备了以下默认API供应商配置：</p>
+              <ul className="ml-4 space-y-1 text-xs">
+                {Object.entries(API_PROVIDERS).map(([key, provider]) => (
+                  <li key={key} className="flex items-center space-x-2">
+                    <span className="text-neon-cyan">•</span>
+                    <span className="font-mono text-neon-green">{provider.name}</span>
+                    <span className="text-gray-400">-</span>
+                    <span className="text-gray-300">{provider.models.length}个可用模型</span>
+                    {DEFAULT_API_KEYS[key] ? (
+                      <span className="text-yellow-400">(默认密钥: ***)</span>
+                    ) : (
+                      <span className="text-yellow-400">(需要配置密钥)</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 p-2 bg-yellow-900/30 border border-yellow-600 rounded text-yellow-100">
+                <div className="flex items-center mb-1">
+                  <span className="mr-2">⚠️</span>
+                  <span className="font-bold text-xs">重要提示</span>
+                </div>
+                <p className="text-xs">
+                  默认配置仅包含供应商信息和模型列表，您需要自行输入有效的API密钥。
+                  请访问各供应商官网获取免费试用额度或购买API服务。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-6">
         {Object.entries(API_PROVIDERS).map(([key, provider]) => (
           <div key={key} className="bg-gray-900 border border-gray-600 p-4 rounded">
@@ -140,16 +277,95 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                   </button>
                 </div>
               </div>
-              
+
+              {/* 默认模型选择 */}
               <div>
                 <label className="block text-sm font-mono text-gray-300 mb-1">
-                  可用模型 ({provider.models.length}个)
+                  默认模型
+                </label>
+                <div className="flex space-x-2">
+                  {/* SiliconFlow 和 OpenRouter 使用下拉选择器 */}
+                  {(key === 'siliconflow' || key === 'openrouter') ? (
+                    <select
+                      value={defaultModels[key] || ''}
+                      onChange={(e) => handleSetDefaultModel(key, e.target.value)}
+                      className="pixel-input flex-1 max-w-[280px] truncate"
+                      style={{ textOverflow: 'ellipsis' }}
+                    >
+                      <option value="">请选择默认模型</option>
+                      {getModelList(key).map((model, index) => (
+                        <option key={index} value={model} title={model}>
+                          {model}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    /* DeepSeek 使用带提示的输入框 */
+                    <div className="flex-1 max-w-[280px]">
+                      <input
+                        type="text"
+                        value={defaultModels[key] || ''}
+                        onChange={(e) => handleSetDefaultModel(key, e.target.value)}
+                        placeholder="请输入模型名称，例如: deepseek-chat"
+                        className="pixel-input w-full"
+                      />
+                      {/* 显示常用模型建议 */}
+                      {(!defaultModels[key] || defaultModels[key] === '') && (
+                        <div className="mt-1 text-xs text-gray-500">
+                          常用模型: deepseek-chat | deepseek-coder | deepseek-reasoner
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => fetchModels(key as 'siliconflow' | 'openrouter' | 'deepseek')}
+                    disabled={isFetchingModels[key]}
+                    className="pixel-button text-xs px-3"
+                    title={(key === 'siliconflow' || key === 'openrouter') ? '从API获取最新模型列表' : '使用默认模型列表'}
+                  >
+                    {isFetchingModels[key] ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (key === 'siliconflow' || key === 'openrouter') ? (
+                      '🔄'
+                    ) : (
+                      '📋'
+                    )}
+                  </button>
+                </div>
+                {defaultModels[key] && (
+                  <div className="mt-1 text-xs text-green-400">
+                    ✓ 已设置默认模型: {defaultModels[key]}
+                  </div>
+                )}
+              </div>
+
+              {/* 模型获取错误信息 */}
+              {modelFetchError[key] && (
+                <div className="p-2 bg-red-900 border border-red-400 rounded text-red-100 text-xs">
+                  {modelFetchError[key]}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-mono text-gray-300 mb-1">
+                  可用模型 ({getModelList(key).length}个)
                 </label>
                 <div className="text-xs text-gray-400 font-mono max-h-20 overflow-y-auto pixel-scrollbar">
-                  {provider.models.map((model, index) => (
-                    <div key={index} className="py-1">{model}</div>
+                  {getModelList(key).map((model, index) => (
+                    <div
+                      key={index}
+                      className={`py-1 truncate ${defaultModels[key] === model ? 'text-neon-green' : ''}`}
+                      title={model}
+                    >
+                      {model} {defaultModels[key] === model && '✓'}
+                    </div>
                   ))}
                 </div>
+                {(key === 'siliconflow' || key === 'openrouter') && (
+                  <div className="mt-2 text-xs text-blue-300">
+                    💡 点击 🔄 按钮可从API获取最新模型列表
+                  </div>
+                )}
               </div>
             </div>
           </div>

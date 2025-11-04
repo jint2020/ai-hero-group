@@ -120,9 +120,18 @@ function App() {
 
   // 更新角色API配置
   const updateCharacterApi = (characterId: string, apiProvider: 'siliconflow' | 'openrouter' | 'deepseek', model: string, apiKey: string) => {
-    setCharacters(prev => prev.map(c => 
-      c.id === characterId 
+    setCharacters(prev => prev.map(c =>
+      c.id === characterId
         ? { ...c, apiProvider, model, apiKey }
+        : c
+    ));
+  };
+
+  // 更新单个角色的属性
+  const updateCharacterProp = (characterId: string, updates: Partial<AICharacter>) => {
+    setCharacters(prev => prev.map(c =>
+      c.id === characterId
+        ? { ...c, ...updates }
         : c
     ));
   };
@@ -575,6 +584,7 @@ function App() {
                   onToggleConversation={toggleConversation}
                   onResetConversation={resetConversation}
                   onProcessNextTurn={() => currentConversation && processNextTurn(currentConversation)}
+                  onUpdateCharacter={updateCharacterProp}
                   isProcessing={isProcessing}
                 />
               </div>
