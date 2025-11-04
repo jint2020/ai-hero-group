@@ -34,6 +34,9 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     "siliconflow" | "openrouter" | "deepseek" | "custom"
   >("siliconflow");
   const [editModel, setEditModel] = useState("");
+  const [isCurrentConversationCollapsed, setIsCurrentConversationCollapsed] =
+    useState(false);
+  const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
 
   // 打开编辑模态框
   const openEditModal = (character: AICharacter) => {
@@ -143,89 +146,124 @@ const ConversationView: React.FC<ConversationViewProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-neon-cyan">当前对话</h2>
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-400">
-              第 {conversation.round} 轮
-            </div>
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-mono ${
-                conversation.isActive
-                  ? "bg-green-900 text-green-300 border border-green-400"
-                  : "bg-gray-700 text-gray-300 border border-gray-500"
-              }`}
-            >
-              {conversation.isActive ? "进行中" : "已暂停"}
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-neon-green mb-2">
-            讨论主题
-          </h3>
-          <div className="bg-gray-900 border border-gray-600 p-3 rounded text-white font-mono">
-            {conversation.topic}
-          </div>
-        </div>
-
-        {/* 角色状态 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {characters.map((character) => (
-            <div
-              key={character.id}
-              className="bg-gray-900 border border-gray-600 p-4 rounded-lg"
-            >
-              <div className="flex items-center space-x-3 mb-3">
+            {!isCurrentConversationCollapsed && (
+              <>
+                <div className="text-sm text-gray-400">
+                  第 {conversation.round} 轮
+                </div>
                 <div
-                  className="character-avatar"
+                  className={`px-3 py-1 rounded-full text-xs font-mono ${
+                    conversation.isActive
+                      ? "bg-green-900 text-green-300 border border-green-400"
+                      : "bg-gray-700 text-gray-300 border border-gray-500"
+                  }`}
+                >
+                  {conversation.isActive ? "进行中" : "已暂停"}
+                </div>
+              </>
+            )}
+            <button
+              onClick={() =>
+                setIsCurrentConversationCollapsed(!isCurrentConversationCollapsed)
+              }
+              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-xs transition-colors"
+            >
+              {isCurrentConversationCollapsed ? "展开" : "折叠"}
+            </button>
+          </div>
+        </div>
+
+        {isCurrentConversationCollapsed ? (
+          /* 折叠状态：只显示角色头像和名字 */
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {characters.map((character) => (
+              <div
+                key={character.id}
+                className="bg-gray-900 border border-gray-600 p-3 rounded-lg flex items-center space-x-3"
+              >
+                <div
+                  className="character-avatar flex-shrink-0"
                   style={{ borderColor: character.color }}
                 >
                   {character.avatar}
                 </div>
-                <div>
-                  <h4 className="font-bold text-white">{character.name}</h4>
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className={`status-indicator ${character.status}`}
-                    ></div>
-                    <span
-                      className={`text-xs ${getStatusColor(character.status)}`}
-                    >
-                      {getStatusText(character.status)}
-                    </span>
-                  </div>
-                </div>
+                <h4 className="font-bold text-white">{character.name}</h4>
               </div>
-              <div className="text-xs text-gray-400 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span>提供商:</span>
-                    <span className="text-gray-300">
-                      {character.apiProvider === "siliconflow"
-                        ? "SiliconFlow"
-                        : character.apiProvider === "openrouter"
-                        ? "OpenRouter"
-                        : character.apiProvider === "deepseek"
-                        ? "DeepSeek"
-                        : "自定义"}
-                    </span>
-                  </div>
-                  <text
-                    onClick={() => openEditModal(character)}
-                    className="px-2 py-1 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-xs transition-colors"
-                  >
-                    编辑
-                  </text>
-                </div>
-                <div>
-                  模型:{" "}
-                  <span className="font-mono text-yellow-400">
-                    {character.model}
-                  </span>
-                </div>
+            ))}
+          </div>
+        ) : (
+          /* 展开状态：显示完整内容 */
+          <>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-neon-green mb-2">
+                讨论主题
+              </h3>
+              <div className="bg-gray-900 border border-gray-600 p-3 rounded text-white font-mono">
+                {conversation.topic}
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* 角色状态 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {characters.map((character) => (
+                <div
+                  key={character.id}
+                  className="bg-gray-900 border border-gray-600 p-4 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div
+                      className="character-avatar"
+                      style={{ borderColor: character.color }}
+                    >
+                      {character.avatar}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white">{character.name}</h4>
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className={`status-indicator ${character.status}`}
+                        ></div>
+                        <span
+                          className={`text-xs ${getStatusColor(character.status)}`}
+                        >
+                          {getStatusText(character.status)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span>提供商:</span>
+                        <span className="text-gray-300">
+                          {character.apiProvider === "siliconflow"
+                            ? "SiliconFlow"
+                            : character.apiProvider === "openrouter"
+                            ? "OpenRouter"
+                            : character.apiProvider === "deepseek"
+                            ? "DeepSeek"
+                            : "自定义"}
+                        </span>
+                      </div>
+                      <text
+                        onClick={() => openEditModal(character)}
+                        className="px-2 py-1 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-xs transition-colors"
+                      >
+                        编辑
+                      </text>
+                    </div>
+                    <div>
+                      模型:{" "}
+                      <span className="font-mono text-yellow-400">
+                        {character.model}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* 对话消息 */}
@@ -334,12 +372,21 @@ const ConversationView: React.FC<ConversationViewProps> = ({
 
       {/* 控制按钮 */}
       <div className="bg-gray-800 border-2 border-cyan-400 p-6 rounded-lg neon-border">
-        <h2 className="text-xl font-bold text-neon-cyan mb-4 flex items-center">
-          <span className="mr-2">🎮</span>
-          对话控制
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-neon-cyan flex items-center">
+            <span className="mr-2">🎮</span>
+            对话控制
+          </h2>
+          <button
+            onClick={() => setIsControlPanelCollapsed(!isControlPanelCollapsed)}
+            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-xs transition-colors"
+          >
+            {isControlPanelCollapsed ? "展开" : "折叠"}
+          </button>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* 控制按钮（始终显示） */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           {/* 暂停/继续 */}
           <button
             onClick={onToggleConversation}
@@ -394,32 +441,37 @@ const ConversationView: React.FC<ConversationViewProps> = ({
           </button>
         </div>
 
-        {/* 状态信息 */}
-        <div className="mt-4 p-3 bg-gray-900 border border-gray-600 rounded">
-          <div className="text-sm font-mono text-gray-300 space-y-1">
-            <div>当前轮次: {conversation.round}</div>
-            <div>消息数量: {conversation.messages.length}</div>
-            <div>参与角色: {characters.length}</div>
-            <div>对话状态: {conversation.isActive ? "进行中" : "已暂停"}</div>
-            {isProcessing && (
-              <div className="text-neon-yellow">正在处理下一轮对话...</div>
-            )}
-          </div>
-        </div>
+        {/* 展开后显示的附加信息 */}
+        {!isControlPanelCollapsed && (
+          <>
+            {/* 状态信息 */}
+            <div className="mb-4 p-3 bg-gray-900 border border-gray-600 rounded">
+              <div className="text-sm font-mono text-gray-300 space-y-1">
+                <div>当前轮次: {conversation.round}</div>
+                <div>消息数量: {conversation.messages.length}</div>
+                <div>参与角色: {characters.length}</div>
+                <div>对话状态: {conversation.isActive ? "进行中" : "已暂停"}</div>
+                {isProcessing && (
+                  <div className="text-neon-yellow">正在处理下一轮对话...</div>
+                )}
+              </div>
+            </div>
 
-        {/* 操作提示 */}
-        <div className="mt-4 p-3 bg-blue-900 border border-blue-400 rounded">
-          <div className="flex items-center mb-2">
-            <span className="mr-2">💡</span>
-            <span className="font-mono font-bold text-blue-100">操作提示</span>
-          </div>
-          <ul className="space-y-1 text-xs font-mono text-blue-200">
-            <li>• 暂停/继续: 控制对话的进行状态</li>
-            <li>• 下一轮: 手动触发下一轮对话</li>
-            <li>• 重置: 清空对话历史，重新开始</li>
-            <li>• AI会按照角色顺序轮流发言</li>
-          </ul>
-        </div>
+            {/* 操作提示 */}
+            <div className="p-3 bg-blue-900 border border-blue-400 rounded">
+              <div className="flex items-center mb-2">
+                <span className="mr-2">💡</span>
+                <span className="font-mono font-bold text-blue-100">操作提示</span>
+              </div>
+              <ul className="space-y-1 text-xs font-mono text-blue-200">
+                <li>• 暂停/继续: 控制对话的进行状态</li>
+                <li>• 下一轮: 手动触发下一轮对话</li>
+                <li>• 重置: 清空对话历史，重新开始</li>
+                <li>• AI会按照角色顺序轮流发言</li>
+              </ul>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 编辑模态框 */}
