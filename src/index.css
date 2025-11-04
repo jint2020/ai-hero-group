@@ -1,0 +1,334 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 90年代街机像素风样式 */
+@layer base {
+  :root {
+    /* 街机色彩系统 */
+    --neon-pink: #ff0080;
+    --neon-cyan: #00ffff;
+    --neon-green: #39ff14;
+    --neon-yellow: #ffff00;
+    --neon-orange: #ff6600;
+    --neon-purple: #8000ff;
+    --dark-bg: #0a0a0a;
+    --darker-bg: #050505;
+    --gray-900: #1a1a1a;
+    --gray-800: #2a2a2a;
+    --gray-700: #3a3a3a;
+    --gray-600: #4a4a4a;
+    --white: #ffffff;
+    --pixel-font: 'Press Start 2P', monospace;
+    --futuristic-font: 'Orbitron', monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--pixel-font);
+    background: var(--dark-bg);
+    color: var(--white);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+  }
+}
+
+@layer components {
+  /* 像素按钮 */
+  .pixel-button {
+    @apply font-mono text-xs px-4 py-2 border-2 border-white;
+    background: linear-gradient(45deg, var(--gray-900), var(--gray-800));
+    color: var(--white);
+    text-shadow: 0 0 10px var(--neon-cyan);
+    box-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.3),
+      inset 0 0 10px rgba(0, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pixel-button:hover {
+    background: linear-gradient(45deg, var(--gray-800), var(--gray-700));
+    color: var(--neon-cyan);
+    text-shadow: 0 0 20px var(--neon-cyan);
+    box-shadow: 
+      0 0 30px rgba(0, 255, 255, 0.5),
+      inset 0 0 20px rgba(0, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .pixel-button:active {
+    transform: translateY(0);
+    box-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.3),
+      inset 0 0 5px rgba(0, 255, 255, 0.1);
+  }
+
+  .pixel-button.pink {
+    border-color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink);
+  }
+
+  .pixel-button.pink:hover {
+    color: var(--neon-pink);
+    text-shadow: 0 0 20px var(--neon-pink);
+    box-shadow: 
+      0 0 30px rgba(255, 0, 128, 0.5),
+      inset 0 0 20px rgba(255, 0, 128, 0.2);
+  }
+
+  .pixel-button.green {
+    border-color: var(--neon-green);
+    text-shadow: 0 0 10px var(--neon-green);
+  }
+
+  .pixel-button.green:hover {
+    color: var(--neon-green);
+    text-shadow: 0 0 20px var(--neon-green);
+    box-shadow: 
+      0 0 30px rgba(57, 255, 20, 0.5),
+      inset 0 0 20px rgba(57, 255, 20, 0.2);
+  }
+
+  /* 霓虹边框 */
+  .neon-border {
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.3),
+      inset 0 0 10px rgba(0, 255, 255, 0.1);
+  }
+
+  .neon-border.pink {
+    border-color: var(--neon-pink);
+    box-shadow: 
+      0 0 20px rgba(255, 0, 128, 0.3),
+      inset 0 0 10px rgba(255, 0, 128, 0.1);
+  }
+
+  .neon-border.green {
+    border-color: var(--neon-green);
+    box-shadow: 
+      0 0 20px rgba(57, 255, 20, 0.3),
+      inset 0 0 10px rgba(57, 255, 20, 0.1);
+  }
+
+  .neon-border.yellow {
+    border-color: var(--neon-yellow);
+    box-shadow: 
+      0 0 20px rgba(255, 255, 0, 0.3),
+      inset 0 0 10px rgba(255, 255, 0, 0.1);
+  }
+
+  /* 像素输入框 */
+  .pixel-input {
+    @apply bg-gray-900 border-2 border-gray-600 text-white px-3 py-2 font-mono text-sm;
+    font-family: var(--pixel-font);
+    box-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.2),
+      inset 0 0 5px rgba(0, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .pixel-input:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.4),
+      inset 0 0 10px rgba(0, 255, 255, 0.2);
+  }
+
+  /* 对话气泡 */
+  .message-bubble {
+    @apply bg-gray-800 border border-gray-600 p-3 rounded-lg mb-3;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.9), rgba(42, 42, 42, 0.9));
+    box-shadow: 
+      0 4px 20px rgba(0, 0, 0, 0.5),
+      0 0 20px rgba(0, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .message-bubble::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .message-bubble:hover::before {
+    left: 100%;
+  }
+
+  /* 角色头像 */
+  .character-avatar {
+    @apply w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg font-bold;
+    background: linear-gradient(45deg, var(--gray-900), var(--gray-800));
+    box-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.3),
+      inset 0 0 10px rgba(0, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .character-avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 
+      0 0 30px rgba(0, 255, 255, 0.5),
+      inset 0 0 15px rgba(0, 255, 255, 0.2);
+  }
+
+  /* 状态指示器 */
+  .status-indicator {
+    @apply w-3 h-3 rounded-full;
+    animation: pulse 2s infinite;
+  }
+
+  .status-indicator.active {
+    background: var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green);
+  }
+
+  .status-indicator.thinking {
+    background: var(--neon-yellow);
+    box-shadow: 0 0 10px var(--neon-yellow);
+    animation: pulse 1s infinite;
+  }
+
+  .status-indicator.idle {
+    background: var(--gray-600);
+  }
+
+  /* 扫描线效果 */
+  .scanline {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanline::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    animation: scanline 3s linear infinite;
+    z-index: 1;
+  }
+
+  /* 闪烁效果 */
+  .flicker {
+    animation: flicker 2s infinite;
+  }
+
+  /* 滚动条样式 */
+  .pixel-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-cyan) var(--gray-900);
+  }
+
+  .pixel-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .pixel-scrollbar::-webkit-scrollbar-track {
+    background: var(--gray-900);
+  }
+
+  .pixel-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--neon-cyan);
+    border-radius: 4px;
+    box-shadow: 0 0 10px var(--neon-cyan);
+  }
+
+  .pixel-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-pink);
+    box-shadow: 0 0 10px var(--neon-pink);
+  }
+}
+
+@layer utilities {
+  .text-neon-cyan {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan);
+  }
+
+  .text-neon-pink {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink);
+  }
+
+  .text-neon-green {
+    color: var(--neon-green);
+    text-shadow: 0 0 10px var(--neon-green);
+  }
+
+  .text-neon-yellow {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 10px var(--neon-yellow);
+  }
+
+  .bg-neon-gradient {
+    background: linear-gradient(45deg, 
+      rgba(255, 0, 128, 0.1), 
+      rgba(0, 255, 255, 0.1), 
+      rgba(57, 255, 20, 0.1));
+  }
+}
+
+/* 动画定义 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  75% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+  }
+}
+
+.glow {
+  animation: glow 2s ease-in-out infinite;
+}
