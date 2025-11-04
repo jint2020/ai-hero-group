@@ -27,6 +27,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   isProcessing,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [editingCharacter, setEditingCharacter] = useState<AICharacter | null>(
     null
   );
@@ -37,6 +38,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   const [isCurrentConversationCollapsed, setIsCurrentConversationCollapsed] =
     useState(false);
   const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
+  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down' | null>(null);
 
   // 打开编辑模态框
   const openEditModal = (character: AICharacter) => {
@@ -80,10 +83,53 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     return API_PROVIDERS[provider]?.models || [];
   };
 
-  // 自动滚动到最新消息
+  // 滚动位置检测
   useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const threshold = 50;
+      const atBottom = scrollHeight - scrollTop - clientHeight < threshold;
+
+      setIsUserAtBottom(atBottom);
+
+      // 根据滚动位置显示不同的按钮
+      if (atBottom) {
+        setScrollDirection(null); // 在底部时不显示按钮
+      } else if (scrollTop < 100) {
+        // 滚动到顶部附近，显示向下按钮
+        setScrollDirection('down');
+      } else {
+        // 滚动到中间或底部附近，显示向上按钮
+        setScrollDirection('up');
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    handleScroll(); // 初始检查
+
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 自动滚动到最新消息（仅当用户在底部时）
+  useEffect(() => {
+    if (isUserAtBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [conversation?.messages, conversation?.currentSpeakingMessage, isUserAtBottom]);
+
+  // 滚动到最顶部
+  const scrollToTop = () => {
+    const firstMessage = messagesContainerRef.current?.querySelector('.message-bubble');
+    firstMessage?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // 滚动到底部
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation?.messages]);
+  };
 
   if (!conversation) {
     return (
@@ -98,6 +144,21 @@ const ConversationView: React.FC<ConversationViewProps> = ({
 
   const getCharacterById = (id: string) => {
     return characters.find((c) => c.id === id);
+  };
+
+  // 获取下一个发言者
+  const getNextSpeaker = () => {
+    if (!conversation || conversation.characters.length === 0) return null;
+
+    // 如果是一轮中的最后一个人发言后，不需要显示等待提示
+    const nextIndex = (conversation.currentSpeakerIndex + 1) % conversation.characters.length;
+
+    // 检查一轮是否即将完成（如果下一个是第一个发言者，说明一轮即将结束）
+    if (nextIndex === 0) {
+      return null;
+    }
+
+    return conversation.characters[nextIndex];
   };
 
   const getStatusColor = (status: AICharacter["status"]) => {
@@ -276,14 +337,15 @@ const ConversationView: React.FC<ConversationViewProps> = ({
           </div>
         </div>
 
-        <div className="space-y-4 max-h-96 overflow-y-auto pixel-scrollbar">
-          {conversation.messages.length === 0 &&
-          !conversation.currentSpeakingMessage ? (
-            <div className="text-center text-gray-500 py-8">
-              <div className="text-4xl mb-2">💬</div>
-              <div className="font-mono">等待AI开始对话...</div>
-            </div>
-          ) : (
+        <div className="relative">
+          <div ref={messagesContainerRef} className="space-y-4 max-h-96 overflow-y-auto pixel-scrollbar">
+            {conversation.messages.length === 0 &&
+            !conversation.currentSpeakingMessage ? (
+              <div className="text-center text-gray-500 py-8">
+                <div className="text-4xl mb-2">💬</div>
+                <div className="font-mono">等待AI开始对话...</div>
+              </div>
+            ) : (
             <>
               {conversation.messages.map((message) => {
                 const character = getCharacterById(message.characterId);
@@ -364,10 +426,49 @@ const ConversationView: React.FC<ConversationViewProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* 等待下一位角色输出的提示 */}
+              {!conversation.currentSpeakingMessage && conversation.isActive && isProcessing && getNextSpeaker() && (
+                <div className="message-bubble">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-xs text-gray-500 animate-pulse">⏳</span>
+                        <span className="text-xs text-gray-500 font-mono">
+                          等待
+                          <span className="text-neon-cyan mx-1 font-bold">{getNextSpeaker()?.name}</span>
+                          输出中
+                          <span className="inline-flex">
+                            <span className="animate-bounce" style={{animationDelay: '0ms'}}>.</span>
+                            <span className="animate-bounce" style={{animationDelay: '200ms'}}>.</span>
+                            <span className="animate-bounce" style={{animationDelay: '400ms'}}>.</span>
+                          </span>
+                        </span>
+                      </div>
+                      <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full animate-pulse" style={{width: '60%'}}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* 滚动按钮 - 单个按钮显示 */}
+        {scrollDirection && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+            <button
+              onClick={scrollDirection === 'up' ? scrollToTop : scrollToBottom}
+              className="p-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-full text-gray-300 hover:text-white transition-colors shadow-lg"
+              title={scrollDirection === 'up' ? '回到顶部' : '回到最新消息'}
+            >
+              {scrollDirection === 'up' ? '↑' : '↓'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 控制按钮 */}
@@ -439,6 +540,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
               <span>重置对话</span>
             </div>
           </button>
+        </div>
         </div>
 
         {/* 展开后显示的附加信息 */}
