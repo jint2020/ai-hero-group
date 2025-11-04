@@ -12,6 +12,7 @@ import './App.css';
 function App() {
   // 状态管理
   const [currentView, setCurrentView] = useState<'setup' | 'conversation'>('setup');
+  const [setupView, setSetupView] = useState<'api' | 'characters'>('api');
   const [characters, setCharacters] = useState<AICharacter[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -386,6 +387,7 @@ function App() {
   // 返回设置页面
   const goBackToSetup = () => {
     setCurrentView('setup');
+    setSetupView('api');
     setCurrentConversation(null);
     setCharacters([]);
     setError(null);
@@ -430,8 +432,11 @@ function App() {
             <h1 className="text-xl font-bold text-neon-cyan flicker">
               群英会
             </h1>
+            <div className="text-neon-pink text-xs mt-1">
+              之
+            </div>
             <div className="text-neon-green text-xs mt-1">
-              90年代街机像素风
+              我的兄弟叫AI
             </div>
           </div>
 
@@ -486,7 +491,10 @@ function App() {
           {/* 侧边栏按钮组 */}
           <div className="p-4 border-t border-gray-600 space-y-3">
             <button
-              onClick={goBackToSetup}
+              onClick={() => {
+                setSetupView('api');
+                goBackToSetup();
+              }}
               className="pixel-button yellow w-full"
             >
               <div className="flex items-center justify-center space-x-2">
@@ -499,7 +507,11 @@ function App() {
                 if (currentConversation) {
                   resetConversation();
                 }
-                goBackToSetup();
+                setCurrentView('setup');
+                setSetupView('characters');
+                setCurrentConversation(null);
+                setCharacters([]);
+                setError(null);
               }}
               className="pixel-button green w-full"
             >
@@ -527,29 +539,33 @@ function App() {
           <div className="flex-1 overflow-y-auto p-6">
             {currentView === 'setup' ? (
               <div className="max-w-4xl mx-auto space-y-8">
-                {/* API配置 */}
-                <ApiConfig
-                  apiKeys={apiKeys}
-                  onApiKeysChange={setApiKeys}
-                />
+                {/* API配置 - 只在 api 视图显示 */}
+                {setupView === 'api' && (
+                  <ApiConfig
+                    apiKeys={apiKeys}
+                    onApiKeysChange={setApiKeys}
+                  />
+                )}
 
-                {/* 角色选择 */}
-                <CharacterSelector
-                  characters={characters}
-                  apiKeys={apiKeys}
-                  onAddCharacter={addCharacter}
-                  onAddCustomCharacter={addCustomCharacter}
-                  onRemoveCharacter={removeCharacter}
-                  onUpdateCharacterApi={updateCharacterApi}
-                  onUpdateCharacter={updateCharacter}
-                />
-
-                {/* 控制面板 */}
-                <ControlPanel
-                  characters={characters}
-                  onStartConversation={startConversation}
-                  isLoading={isLoading}
-                />
+                {/* 角色选择和控制面板 - 只在 characters 视图显示 */}
+                {setupView === 'characters' && (
+                  <>
+                    <CharacterSelector
+                      characters={characters}
+                      apiKeys={apiKeys}
+                      onAddCharacter={addCharacter}
+                      onAddCustomCharacter={addCustomCharacter}
+                      onRemoveCharacter={removeCharacter}
+                      onUpdateCharacterApi={updateCharacterApi}
+                      onUpdateCharacter={updateCharacter}
+                    />
+                    <ControlPanel
+                      characters={characters}
+                      onStartConversation={startConversation}
+                      isLoading={isLoading}
+                    />
+                  </>
+                )}
               </div>
             ) : (
               <div className="max-w-5xl mx-auto">
