@@ -1,0 +1,41 @@
+{
+  "todos": {
+    "Coordinator": {
+      "1": {
+        "id": "1",
+        "content": "设计90年代街机像素风界面风格",
+        "details": "创建复古街机风格的UI设计，包括像素字体、霓虹色彩、复古按钮样式等，营造90年代街机游戏的视觉氛围",
+        "status": "completed",
+        "priority": "high"
+      },
+      "2": {
+        "id": "2",
+        "content": "实现AI对话核心功能",
+        "details": "开发多AI对话系统：1) 支持3个AI同时对话 2) 集成三个API供应商（SiliconFlow、OpenRouter、DeepSeek）3) 实现有序发言机制 4) 基于多轮对话记录生成响应",
+        "status": "completed",
+        "priority": "high"
+      },
+      "3": {
+        "id": "3",
+        "content": "开发角色管理系统",
+        "details": "实现角色功能：1) 预设多种AI角色（如智者、幽默者、分析师等）2) 用户可自定义角色设定 3) 角色在对话中保持一致性",
+        "status": "completed",
+        "priority": "medium"
+      },
+      "4": {
+        "id": "4",
+        "content": "构建对话管理界面",
+        "details": "创建对话控制界面：1) 主题设定功能 2) 新对话创建 3) 对话历史记录 4) 对话控制（开始/暂停/重置）",
+        "status": "completed",
+        "priority": "medium"
+      },
+      "5": {
+        "id": "5",
+        "content": "实现API配置管理",
+        "details": "开发API配置功能：1) 用户可输入各供应商的API密钥 2) 支持多个API供应商切换 3) API连接状态检测",
+        "status": "completed",
+        "priority": "medium"
+      }
+    }
+  }
+}

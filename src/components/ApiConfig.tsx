@@ -10,6 +10,11 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
   const [localKeys, setLocalKeys] = useState<Record<string, string>>(apiKeys);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [testResults, setTestResults] = useState<Record<string, 'testing' | 'success' | 'error' | null>>({});
+  const [showCustomConfig, setShowCustomConfig] = useState(false);
+  const [customProviderName, setCustomProviderName] = useState('');
+  const [customBaseUrl, setCustomBaseUrl] = useState('');
+  const [customModels, setCustomModels] = useState(''); // 逗号分隔的模型列表
+  const [customApiKey, setCustomApiKey] = useState('');
 
   useEffect(() => {
     setLocalKeys(apiKeys);
@@ -150,7 +155,151 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
           </div>
         ))}
       </div>
-      
+
+      {/* 自定义API配置 */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-neon-yellow">自定义API提供商</h3>
+          {!showCustomConfig ? (
+            <button
+              onClick={() => setShowCustomConfig(true)}
+              className="pixel-button green"
+            >
+              添加自定义API
+            </button>
+          ) : null}
+        </div>
+
+        {showCustomConfig && (
+          <div className="bg-gray-900 border border-gray-600 p-4 rounded-lg space-y-4">
+            <h4 className="text-md font-semibold text-neon-green mb-2">配置自定义API</h4>
+
+            {/* 提供商名称 */}
+            <div>
+              <label className="block text-sm font-mono text-gray-300 mb-1">
+                提供商名称
+              </label>
+              <input
+                type="text"
+                value={customProviderName}
+                onChange={(e) => setCustomProviderName(e.target.value)}
+                placeholder="例如: 我的自定义API"
+                className="pixel-input w-full"
+              />
+            </div>
+
+            {/* Base URL */}
+            <div>
+              <label className="block text-sm font-mono text-gray-300 mb-1">
+                Base URL
+              </label>
+              <input
+                type="text"
+                value={customBaseUrl}
+                onChange={(e) => setCustomBaseUrl(e.target.value)}
+                placeholder="例如: https://api.example.com/v1"
+                className="pixel-input w-full"
+              />
+            </div>
+
+            {/* 模型列表 */}
+            <div>
+              <label className="block text-sm font-mono text-gray-300 mb-1">
+                支持的模型 (逗号分隔)
+              </label>
+              <input
+                type="text"
+                value={customModels}
+                onChange={(e) => setCustomModels(e.target.value)}
+                placeholder="例如: gpt-3.5-turbo, gpt-4, claude-3"
+                className="pixel-input w-full"
+              />
+            </div>
+
+            {/* API Key */}
+            <div>
+              <label className="block text-sm font-mono text-gray-300 mb-1">
+                API Key
+              </label>
+              <div className="flex">
+                <input
+                  type={showKeys['custom'] ? 'text' : 'password'}
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder="输入自定义API的密钥"
+                  className="pixel-input flex-1 rounded-r-none"
+                />
+                <button
+                  onClick={() => toggleShowKey('custom')}
+                  className="px-3 py-2 bg-gray-700 border-2 border-l-0 border-gray-600 text-gray-300 hover:text-white transition-colors"
+                >
+                  {showKeys['custom'] ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+
+            {/* 操作按钮 */}
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  if (!customProviderName.trim()) {
+                    alert('请输入提供商名称');
+                    return;
+                  }
+                  if (!customBaseUrl.trim()) {
+                    alert('请输入Base URL');
+                    return;
+                  }
+                  if (!customApiKey.trim()) {
+                    alert('请输入API Key');
+                    return;
+                  }
+
+                  // 保存自定义配置
+                  const newKeys = { ...localKeys, 'custom': customApiKey };
+                  setLocalKeys(newKeys);
+                  onApiKeysChange(newKeys);
+
+                  // 重置表单
+                  setShowCustomConfig(false);
+                  setCustomProviderName('');
+                  setCustomBaseUrl('');
+                  setCustomModels('');
+                  setCustomApiKey('');
+                }}
+                className="pixel-button green flex-1"
+              >
+                保存配置
+              </button>
+              <button
+                onClick={() => {
+                  setShowCustomConfig(false);
+                  setCustomProviderName('');
+                  setCustomBaseUrl('');
+                  setCustomModels('');
+                  setCustomApiKey('');
+                }}
+                className="pixel-button flex-1"
+              >
+                取消
+              </button>
+            </div>
+
+            <div className="p-3 bg-blue-900 border border-blue-400 rounded text-blue-100 text-xs">
+              <div className="flex items-center mb-2">
+                <span className="mr-2">💡</span>
+                <span className="font-mono font-bold">自定义API提示</span>
+              </div>
+              <ul className="space-y-1 text-xs font-mono">
+                <li>• 请确保你的API兼容OpenAI格式</li>
+                <li>• Base URL需要包含协议 (https://)</li>
+                <li>• 模型名称必须与你的API实际支持的模型一致</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="mt-4 p-3 bg-blue-900 border border-blue-400 rounded text-blue-100 text-sm">
         <div className="flex items-center mb-2">
           <span className="mr-2">💡</span>

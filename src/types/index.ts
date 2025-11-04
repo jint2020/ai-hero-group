@@ -7,9 +7,10 @@ export interface AICharacter {
   systemPrompt: string;
   color: string;
   status: 'idle' | 'thinking' | 'speaking' | 'error';
-  apiProvider: 'siliconflow' | 'openrouter' | 'deepseek';
+  apiProvider: 'siliconflow' | 'openrouter' | 'deepseek' | 'custom';
   model: string;
   apiKey: string;
+  customBaseUrl?: string; // 自定义base URL
 }
 
 // API提供商配置
@@ -18,6 +19,14 @@ export interface APIProvider {
   baseUrl: string;
   models: string[];
   requiresKey: boolean;
+}
+
+// 自定义API提供商配置
+export interface CustomAPIProvider {
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+  models: string[];
 }
 
 // 对话消息类型
@@ -39,6 +48,16 @@ export interface Conversation {
   currentSpeakerIndex: number;
   round: number;
   createdAt: number;
+  currentSpeakingMessage?: Message;
+}
+
+// 自定义角色配置类型
+export interface CustomCharacterConfig {
+  name: string;
+  avatar: string;
+  personality: string;
+  systemPrompt: string;
+  color: string;
 }
 
 // 预设角色

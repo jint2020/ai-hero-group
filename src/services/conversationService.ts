@@ -64,8 +64,8 @@ export class ConversationService {
   startConversation(conversation: Conversation): Conversation {
     return {
       ...conversation,
-      isActive: true,
-      currentSpeakerIndex: -1 // 从第一个开始
+      isActive: true
+      // 保持 currentSpeakerIndex 不变，允许从暂停处继续
     };
   }
 

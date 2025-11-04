@@ -133,49 +133,82 @@ const ConversationView: React.FC<ConversationViewProps> = ({
           <h2 className="text-xl font-bold text-neon-cyan">对话记录</h2>
           <div className="text-sm text-gray-400">
             {conversation.messages.length} 条消息
+            {conversation.currentSpeakingMessage && ' (+1 正在输入)'}
           </div>
         </div>
 
         <div className="space-y-4 max-h-96 overflow-y-auto pixel-scrollbar">
-          {conversation.messages.length === 0 ? (
+          {conversation.messages.length === 0 && !conversation.currentSpeakingMessage ? (
             <div className="text-center text-gray-500 py-8">
               <div className="text-4xl mb-2">💬</div>
               <div className="font-mono">等待AI开始对话...</div>
             </div>
           ) : (
-            conversation.messages.map((message) => {
-              const character = getCharacterById(message.characterId);
-              if (!character) return null;
+            <>
+              {conversation.messages.map((message) => {
+                const character = getCharacterById(message.characterId);
+                if (!character) return null;
 
-              return (
-                <div key={message.id} className="message-bubble">
+                return (
+                  <div key={message.id} className="message-bubble">
+                    <div className="flex items-start space-x-3">
+                      <div
+                        className="character-avatar flex-shrink-0"
+                        style={{ borderColor: character.color }}
+                      >
+                        {character.avatar}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span
+                            className="font-bold text-sm"
+                            style={{ color: character.color }}
+                          >
+                            {character.name}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {formatTime(message.timestamp)}
+                          </span>
+                        </div>
+                        <div className="text-white font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                          {message.content}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {/* 流式消息显示 */}
+              {conversation.currentSpeakingMessage && (
+                <div className="message-bubble">
                   <div className="flex items-start space-x-3">
-                    <div 
+                    <div
                       className="character-avatar flex-shrink-0"
-                      style={{ borderColor: character.color }}
+                      style={{ borderColor: getCharacterById(conversation.currentSpeakingMessage.characterId)?.color }}
                     >
-                      {character.avatar}
+                      {getCharacterById(conversation.currentSpeakingMessage.characterId)?.avatar}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <span 
+                        <span
                           className="font-bold text-sm"
-                          style={{ color: character.color }}
+                          style={{ color: getCharacterById(conversation.currentSpeakingMessage.characterId)?.color }}
                         >
-                          {character.name}
+                          {getCharacterById(conversation.currentSpeakingMessage.characterId)?.name}
                         </span>
-                        <span className="text-xs text-gray-400">
-                          {formatTime(message.timestamp)}
+                        <span className="text-xs text-neon-yellow animate-pulse">
+                          正在输入中...
                         </span>
                       </div>
                       <div className="text-white font-mono text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.content}
+                        {conversation.currentSpeakingMessage.content}
+                        <span className="inline-block w-2 h-4 bg-cyan-400 ml-1 animate-pulse"></span>
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })
+              )}
+            </>
           )}
           <div ref={messagesEndRef} />
         </div>
