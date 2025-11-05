@@ -23,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     setSetupView,
     clearCharacters,
     goBackToSetup,
+    setError,
   } = useAppStore();
 
   return (
@@ -137,8 +138,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-4 border-t border-gray-600 space-y-3 flex-shrink-0">
             <button
               onClick={() => {
+                setCurrentView('setup');
+                setSetupView('characters');
+                useAppStore.setState({ currentConversation: null });
                 clearCharacters();
-                setSetupView("characters");
+                setError(null);
                 onToggleSidebar();
               }}
               className="pixel-button green w-full"
