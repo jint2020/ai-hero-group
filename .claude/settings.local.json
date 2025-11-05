@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(temp_file.ts)"
-    ],
-    "deny": [],
-    "ask": []
-  }
-}
