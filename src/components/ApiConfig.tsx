@@ -3,7 +3,7 @@ import { API_PROVIDERS } from "../types/apiProviders";
 import { DEFAULT_API_KEYS } from "../config/defaultConfig";
 import { aiService } from "../services/aiService";
 import { storageService } from "../services/storageService";
-import { Icon } from "@iconify/react";
+import Icon from "./ui/Icon";
 
 interface ApiConfigProps {
   apiKeys: Record<string, string>;
@@ -230,7 +230,9 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
       {/* 默认配置信息提示 */}
       <div className="mb-6 p-4 bg-gradient-to-r from-blue-900/50 to-purple-900/50 border border-blue-400 rounded-lg">
         <div className="flex items-start space-x-3">
-          <span className="text-2xl">ℹ️</span>
+          <span className="text-2xl">
+            <Icon icon="dinkie-icons:keyboard-small-filled" size={20} />
+          </span>
           <div>
             <h3 className="text-lg font-bold text-neon-blue mb-2">
               默认API配置
@@ -258,7 +260,9 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
               </ul>
               <div className="mt-3 p-2 bg-yellow-900/30 border border-yellow-600 rounded text-yellow-100">
                 <div className="flex items-center mb-1">
-                  <span className="mr-2">⚠️</span>
+                  <span className="mr-2">
+                    <Icon icon="dinkie-icons:bell" size={20} />
+                  </span>
                   <span className="font-bold text-xs">重要提示</span>
                 </div>
                 <p className="text-xs">
@@ -314,7 +318,17 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                     onClick={() => toggleShowKey(key)}
                     className="px-3 py-2 bg-gray-700 border-2 border-l-0 border-gray-600 text-gray-300 hover:text-white transition-colors"
                   >
-                    {showKeys[key] ? "🙈" : "👁️"}
+                    {showKeys[key] ? (
+                      <Icon
+                        icon="dinkie-icons:black-sun-with-rays-filled"
+                        size={20}
+                      />
+                    ) : (
+                      <Icon
+                        icon="dinkie-icons:crescent-moon-filled"
+                        size={20}
+                      />
+                    )}
                   </button>
                 </div>
               </div>
@@ -380,9 +394,9 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                     {isFetchingModels[key] ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     ) : key === "siliconflow" || key === "openrouter" ? (
-                      <Icon icon="dinkie-icons:anyway-fm" width="20" height="20" />
+                      <Icon icon="dinkie-icons:anyway-fm" size={20} />
                     ) : (
-                      "📋"
+                      <Icon icon="dinkie-icons:adjustments" size={20} />
                     )}
                   </button>
                 </div>
@@ -419,7 +433,8 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                 </div>
                 {(key === "siliconflow" || key === "openrouter") && (
                   <div className="mt-2 text-xs text-blue-300">
-                    💡 点击 🔄 按钮可从API获取最新模型列表
+                    点击 <Icon icon="dinkie-icons:anyway-fm" size={13} />{" "}
+                    按钮可从API获取最新模型列表
                   </div>
                 )}
               </div>
@@ -509,7 +524,14 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                   onClick={() => toggleShowKey("custom")}
                   className="px-3 py-2 bg-gray-700 border-2 border-l-0 border-gray-600 text-gray-300 hover:text-white transition-colors"
                 >
-                  {showKeys["custom"] ? "🙈" : "👁️"}
+                  {showKeys["custom"] ? (
+                    <Icon
+                      icon="dinkie-icons:black-sun-with-rays-filled"
+                      size={20}
+                    />
+                  ) : (
+                    <Icon icon="dinkie-icons:crescent-moon-filled" size={20} />
+                  )}
                 </button>
               </div>
             </div>

@@ -61,6 +61,7 @@ interface AppState {
   ) => void;
   updateCharacterProp: (characterId: string, updates: Partial<AICharacter>) => void;
   removeCharacter: (characterId: string) => void;
+  clearCharacters: () => void;
 
   // Actions - API配置
   setApiKeys: (keys: Record<string, string>) => void;
@@ -203,6 +204,10 @@ export const useAppStore = create<AppState>()(
           set((state) => ({
             characters: state.characters.filter((c) => c.id !== characterId)
           }));
+        },
+
+        clearCharacters: () => {
+          set({ characters: [] });
         },
 
         // Actions - API配置

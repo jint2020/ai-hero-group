@@ -3,13 +3,16 @@ import { useAppStore } from '../store/useAppStore';
 import ApiConfig from './ApiConfig';
 import CharacterSelector from './CharacterSelector';
 import ControlPanel from './ControlPanel';
+import ResizableDivider from './ui/ResizableDivider';
+import { useSidebarWidth } from '../hooks/useSidebarWidth';
 
 const SetupView: React.FC = () => {
   const { setupView, apiKeys, setApiKeys } = useAppStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarWidth, updateSidebarWidth } = useSidebarWidth();
 
   return (
-    <div className='flex h-screen w-full relative'>
+    <div className='flex h-screen w-full relative resizable-container'>
       {/* 移动端遮罩层 */}
       {sidebarOpen && (
         <div
@@ -22,10 +25,19 @@ const SetupView: React.FC = () => {
       <aside
         className={`
           fixed lg:relative top-0 left-0 h-full
-          w-80 max-w-[85vw] bg-gray-800 border-r-2 border-cyan-400 flex flex-col
+          bg-gray-800 border-r-2 border-cyan-400 flex flex-col
           transform transition-transform duration-300 ease-in-out z-50
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
+        style={{
+          // 移动端：使用动态宽度
+          // PC端（lg:）：使用存储的宽度
+          width: sidebarOpen
+            ? `${Math.min(sidebarWidth, window.innerWidth * 0.85)}px`
+            : typeof window !== 'undefined' && window.innerWidth >= 1024
+              ? `${sidebarWidth}px`
+              : undefined
+        }}
       >
         {/* 侧边栏标题 */}
         <div className='bg-gray-900 border-b border-gray-600 p-4'>
@@ -40,8 +52,13 @@ const SetupView: React.FC = () => {
           </div>
         </div>
 
+        {/* 对话记录列表 */}
+        <div className="flex-1 overflow-y-auto">
+          <ConversationHistory onNavigate={() => setSidebarOpen(false)} />
+        </div>
+
         {/* 移动端侧边栏头部 */}
-        <div className='lg:hidden flex items-center justify-between p-4 border-b border-gray-600'>
+        <div className='lg:hidden flex items-center justify-between p-4 border-t border-gray-600 flex-shrink-0'>
           <span className='text-sm font-bold text-gray-300'>对话记录</span>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -51,13 +68,20 @@ const SetupView: React.FC = () => {
             ✕
           </button>
         </div>
-
-        {/* 对话记录列表 */}
-        <ConversationHistory />
       </aside>
 
+      {/* PC端可调整分隔条 */}
+      <div className='hidden lg:block'>
+        <ResizableDivider
+          onResize={updateSidebarWidth}
+          initialWidth={sidebarWidth}
+          minWidth={200}
+          maxWidth={600}
+        />
+      </div>
+
       {/* 右侧主内容区 */}
-      <main className='flex-1 flex flex-col overflow-hidden flex-grow'>
+      <main className='flex-1 flex flex-col overflow-hidden flex-grow min-w-0 bg-gray-900'>
         <div className='flex-1 overflow-y-auto'>
           <div className='max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-8'>
             {/* 移动端顶部导航栏 */}
@@ -105,11 +129,11 @@ const SetupView: React.FC = () => {
 };
 
 // 独立组件：对话记录列表
-const ConversationHistory: React.FC = () => {
+const ConversationHistory: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => {
   const { allConversations, currentConversation, loadConversation, deleteConversation } = useAppStore();
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
+    <div className="p-4">
       <div className="mb-4">
         <h3 className="text-sm font-bold text-gray-300 mb-2">对话记录</h3>
         {allConversations.length > 0 ? (
@@ -119,7 +143,10 @@ const ConversationHistory: React.FC = () => {
               .map((conversation) => (
                 <div
                   key={conversation.id}
-                  onClick={() => loadConversation(conversation)}
+                  onClick={() => {
+                    loadConversation(conversation);
+                    onNavigate?.();
+                  }}
                   className={`bg-gray-700 border p-3 rounded text-sm cursor-pointer transition-colors ${
                     currentConversation?.id === conversation.id
                       ? 'border-neon-cyan bg-gray-600'
