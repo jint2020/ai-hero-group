@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
 import ConversationOverview from './conversation/ConversationOverview';
 import MessageList from './conversation/MessageList';
 import ConversationControls from './conversation/ConversationControls';

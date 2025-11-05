@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
 import { PRESET_CHARACTERS } from '../../types';
 import { API_PROVIDERS } from '../../types/apiProviders';
 

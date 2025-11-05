@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore } from '../../stores/useAppStore';
 import { CustomCharacterConfig } from '../../types';
 import { API_PROVIDERS } from '../../types/apiProviders';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 interface CustomCharacterFormProps {
   editingCharacterId: string | null;
@@ -112,152 +124,159 @@ const CustomCharacterForm: React.FC<CustomCharacterFormProps> = ({
   };
 
   return (
-    <div className='bg-gray-900 border border-gray-600 p-4 rounded-lg'>
-      {/* 角色名称 */}
-      <div className='mb-4'>
-        <label className='block text-sm font-mono text-gray-300 mb-2'>
-          角色名称
-        </label>
-        <input
-          type='text'
-          value={customConfig.name}
-          onChange={(e) =>
-            setCustomConfig({ ...customConfig, name: e.target.value })
-          }
-          placeholder='例如: 我的AI助手'
-          className='w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white'
-        />
-      </div>
-
-      {/* 头像选择 */}
-      <div className='mb-4'>
-        <label className='block text-sm font-mono text-gray-300 mb-2'>
-          选择头像
-        </label>
-        <div className='grid grid-cols-8 gap-2'>
-          {avatarOptions.map((avatar) => (
-            <button
-              key={avatar}
-              onClick={() => setCustomConfig({ ...customConfig, avatar })}
-              className={`p-2 border rounded text-xl ${
-                customConfig.avatar === avatar
-                  ? 'border-neon-cyan bg-gray-800'
-                  : 'border-gray-600 hover:border-gray-500'
-              }`}
-            >
-              {avatar}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 颜色选择 */}
-      <div className='mb-4'>
-        <label className='block text-sm font-mono text-gray-300 mb-2'>
-          选择颜色
-        </label>
-        <div className='flex flex-wrap gap-2'>
-          {colorOptions.map((color) => (
-            <button
-              key={color}
-              onClick={() => setCustomConfig({ ...customConfig, color })}
-              className={`w-8 h-8 rounded border-2 ${
-                customConfig.color === color ? 'border-white' : 'border-gray-600'
-              }`}
-              style={{ backgroundColor: color }}
-              title={color}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 角色性格 */}
-      <div className='mb-4'>
-        <label className='block text-sm font-mono text-gray-300 mb-2'>
-          角色性格
-        </label>
-        <input
-          type='text'
-          value={customConfig.personality}
-          onChange={(e) =>
-            setCustomConfig({ ...customConfig, personality: e.target.value })
-          }
-          placeholder='例如: 幽默、理性、富有创意'
-          className='w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white'
-        />
-      </div>
-
-      {/* 系统提示词 */}
-      <div className='mb-4'>
-        <label className='block text-sm font-mono text-gray-300 mb-2'>
-          系统提示词
-        </label>
-        <textarea
-          value={customConfig.systemPrompt}
-          onChange={(e) =>
-            setCustomConfig({ ...customConfig, systemPrompt: e.target.value })
-          }
-          placeholder='定义AI角色的行为和回答风格...'
-          rows={4}
-          className='w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white'
-        />
-      </div>
-
-      {/* API配置 */}
-      <div className='mb-4'>
-        <label className='block text-sm font-mono text-gray-300 mb-2'>
-          API提供商
-        </label>
-        <select
-          value={selectedProvider}
-          onChange={(e) =>
-            setSelectedProvider(e.target.value as typeof selectedProvider)
-          }
-          className='w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white'
-        >
-          <option value='siliconflow'>SiliconFlow</option>
-          <option value='openrouter'>OpenRouter</option>
-          <option value='deepseek'>DeepSeek</option>
-          <option value='custom'>自定义</option>
-        </select>
-      </div>
-
-      <div className='mb-6'>
-        <label className='block text-sm font-mono text-gray-300 mb-2'>模型</label>
-        {selectedProvider === 'deepseek' ? (
-          <input
+    <Card className='bg-gray-900 border-gray-700'>
+      <CardHeader>
+        <CardTitle className='text-cyan-400'>
+          {editingCharacterId ? '编辑自定义角色' : '创建自定义角色'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className='space-y-4'>
+        {/* 角色名称 */}
+        <div className='space-y-2'>
+          <Label htmlFor='name' className='text-gray-300'>角色名称</Label>
+          <Input
+            id='name'
             type='text'
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            placeholder='请输入模型名称，例如: deepseek-chat'
-            className='w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white'
+            value={customConfig.name}
+            onChange={(e) =>
+              setCustomConfig({ ...customConfig, name: e.target.value })
+            }
+            placeholder='例如: 我的AI助手'
+            className='bg-gray-800 border-gray-600 text-white'
           />
-        ) : (
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className='w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white'
-          >
-            <option value=''>请选择模型</option>
-            {API_PROVIDERS[selectedProvider].models.map((model) => (
-              <option key={model} value={model}>
-                {model}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+        </div>
 
-      {/* 操作按钮 */}
-      <div className='flex space-x-3'>
-        <button onClick={handleSave} className='flex-1 pixel-button green'>
-          {editingCharacterId ? '更新角色' : '创建角色'}
-        </button>
-        <button onClick={onCancel} className='flex-1 pixel-button'>
-          取消
-        </button>
-      </div>
-    </div>
+        {/* 头像选择 */}
+        <div className='space-y-2'>
+          <Label className='text-gray-300'>选择头像</Label>
+          <div className='grid grid-cols-8 gap-2'>
+            {avatarOptions.map((avatar) => (
+              <Button
+                key={avatar}
+                type='button'
+                variant={customConfig.avatar === avatar ? 'neon' : 'outline'}
+                size='icon'
+                onClick={() => setCustomConfig({ ...customConfig, avatar })}
+                className='text-xl'
+              >
+                {avatar}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* 颜色选择 */}
+        <div className='space-y-2'>
+          <Label className='text-gray-300'>选择颜色</Label>
+          <div className='flex flex-wrap gap-2'>
+            {colorOptions.map((color) => (
+              <Button
+                key={color}
+                type='button'
+                variant='outline'
+                size='icon'
+                onClick={() => setCustomConfig({ ...customConfig, color })}
+                className={`w-8 h-8 rounded-full ${
+                  customConfig.color === color ? 'border-white' : 'border-gray-600'
+                }`}
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 角色性格 */}
+        <div className='space-y-2'>
+          <Label htmlFor='personality' className='text-gray-300'>角色性格</Label>
+          <Input
+            id='personality'
+            type='text'
+            value={customConfig.personality}
+            onChange={(e) =>
+              setCustomConfig({ ...customConfig, personality: e.target.value })
+            }
+            placeholder='例如: 幽默、理性、富有创意'
+            className='bg-gray-800 border-gray-600 text-white'
+          />
+        </div>
+
+        {/* 系统提示词 */}
+        <div className='space-y-2'>
+          <Label htmlFor='systemPrompt' className='text-gray-300'>系统提示词</Label>
+          <Textarea
+            id='systemPrompt'
+            value={customConfig.systemPrompt}
+            onChange={(e) =>
+              setCustomConfig({ ...customConfig, systemPrompt: e.target.value })
+            }
+            placeholder='定义AI角色的行为和回答风格...'
+            rows={4}
+            className='bg-gray-800 border-gray-600 text-white'
+          />
+        </div>
+
+        {/* API配置 */}
+        <div className='space-y-2'>
+          <Label className='text-gray-300'>API提供商</Label>
+          <Select
+            value={selectedProvider}
+            onValueChange={(value) =>
+              setSelectedProvider(value as typeof selectedProvider)
+            }
+          >
+            <SelectTrigger className='bg-gray-800 border-gray-600 text-white'>
+              <SelectValue placeholder='选择提供商' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='siliconflow'>SiliconFlow</SelectItem>
+              <SelectItem value='openrouter'>OpenRouter</SelectItem>
+              <SelectItem value='deepseek'>DeepSeek</SelectItem>
+              <SelectItem value='custom'>自定义</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='space-y-2'>
+          <Label className='text-gray-300'>模型</Label>
+          {selectedProvider === 'deepseek' ? (
+            <Input
+              type='text'
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              placeholder='请输入模型名称，例如: deepseek-chat'
+              className='bg-gray-800 border-gray-600 text-white'
+            />
+          ) : (
+            <Select
+              value={selectedModel}
+              onValueChange={setSelectedModel}
+            >
+              <SelectTrigger className='bg-gray-800 border-gray-600 text-white'>
+                <SelectValue placeholder='选择模型' />
+              </SelectTrigger>
+              <SelectContent>
+                {API_PROVIDERS[selectedProvider].models.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        {/* 操作按钮 */}
+        <div className='flex gap-3 pt-4'>
+          <Button onClick={handleSave} variant='neonGreen' className='flex-1'>
+            {editingCharacterId ? '更新角色' : '创建角色'}
+          </Button>
+          <Button onClick={onCancel} variant='outline' className='flex-1'>
+            取消
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

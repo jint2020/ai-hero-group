@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useAppStore } from './store/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
 import SetupView from './components/SetupView';
 import ConversationLayout from './components/Layout';
 import ErrorBanner from './components/ErrorBanner';

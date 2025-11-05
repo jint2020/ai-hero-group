@@ -1,7 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pnpm add zustand)"
+      "Bash(pnpm add zustand)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/tsconfig.json)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/vite.config.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/index.css)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/store/useAppStore.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/types/index.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/lib/utils.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/components/Layout.tsx)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/components/Sidebar.tsx)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/components/SetupView.tsx)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/services/aiService.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/services/conversationService.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/services/storageService.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/types/apiProviders.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/config/defaultConfig.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/hooks/useSidebarWidth.ts)",
+      "Bash(cat /e/forontend_projects/ai-hero-group/src/components/ui/button.tsx)"
     ],
     "deny": [],
     "ask": []

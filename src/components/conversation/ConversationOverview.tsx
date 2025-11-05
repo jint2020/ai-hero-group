@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Conversation, AICharacter } from '../../types';
-import { API_PROVIDERS } from '../../types/apiProviders';
 
 interface ConversationOverviewProps {
   conversation: Conversation;

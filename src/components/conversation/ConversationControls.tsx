@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Conversation } from '../../types';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
 
 interface ConversationControlsProps {
   conversation: Conversation;

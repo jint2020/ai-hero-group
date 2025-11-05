@@ -4,6 +4,16 @@ import { DEFAULT_API_KEYS } from "../config/defaultConfig";
 import { aiService } from "../services/aiService";
 import { storageService } from "../services/storageService";
 import Icon from "./ui/Icon";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface ApiConfigProps {
   apiKeys: Record<string, string>;
@@ -287,36 +297,42 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
               </h3>
               <div className="flex items-center space-x-2">
                 {getTestResultIcon(key)}
-                <button
+                <Button
+                  type="button"
+                  variant="neon"
+                  size="sm"
                   onClick={() =>
                     testConnection(
                       key as "siliconflow" | "openrouter" | "deepseek"
                     )
                   }
-                  className="pixel-button text-xs px-2 py-1"
+                  className="text-xs px-2 py-1"
                   disabled={testResults[key] === "testing"}
                 >
                   测试连接
-                </button>
+                </Button>
               </div>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-mono text-gray-300 mb-1">
+                <Label className="block text-sm font-mono text-gray-300 mb-1">
                   API密钥
-                </label>
+                </Label>
                 <div className="flex">
-                  <input
+                  <Input
                     type={showKeys[key] ? "text" : "password"}
                     value={localKeys[key] || ""}
                     onChange={(e) => handleKeyChange(key, e.target.value)}
                     placeholder={`输入${provider.name}的API密钥`}
-                    className="pixel-input flex-1 rounded-r-none"
+                    className="pixel-input flex-1 "
                   />
-                  <button
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={() => toggleShowKey(key)}
-                    className="px-3 py-2 bg-gray-700 border-2 border-l-0 border-gray-600 text-gray-300 hover:text-white transition-colors"
+                    className="px-3 py-2 bg-gray-700 border-2 border-l-0 border-gray-600 text-gray-300 hover:text-white transition-colors rounded-l-none"
                   >
                     {showKeys[key] ? (
                       <Icon
@@ -329,37 +345,37 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                         size={20}
                       />
                     )}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               {/* 默认模型选择 */}
               <div>
-                <label className="block text-sm font-mono text-gray-300 mb-1">
+                <Label className="block text-sm font-mono text-gray-300 mb-1">
                   默认模型
-                </label>
+                </Label>
                 <div className="flex space-x-2">
                   {/* SiliconFlow 和 OpenRouter 使用下拉选择器 */}
                   {key === "siliconflow" || key === "openrouter" ? (
-                    <select
+                    <Select
                       value={defaultModels[key] || ""}
-                      onChange={(e) =>
-                        handleSetDefaultModel(key, e.target.value)
-                      }
-                      className="pixel-input flex-1 max-w-[280px] truncate"
-                      style={{ textOverflow: "ellipsis" }}
+                      onValueChange={(value) => handleSetDefaultModel(key, value)}
                     >
-                      <option value="">请选择默认模型</option>
-                      {getModelList(key).map((model, index) => (
-                        <option key={index} value={model} title={model}>
-                          {model}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="pixel-input flex-1 ">
+                        <SelectValue placeholder="请选择默认模型" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getModelList(key).map((model, index) => (
+                          <SelectItem key={index} value={model} title={model}>
+                            {model}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   ) : (
                     /* DeepSeek 使用带提示的输入框 */
-                    <div className="flex-1 max-w-[280px]">
-                      <input
+                    <div className="flex-1 max-w-[240px] min-w-[160px]">
+                      <Input
                         type="text"
                         value={defaultModels[key] || ""}
                         onChange={(e) =>
@@ -377,14 +393,17 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                       )}
                     </div>
                   )}
-                  <button
+                  <Button
+                    type="button"
+                    variant="neon"
+                    size="sm"
                     onClick={() =>
                       fetchModels(
                         key as "siliconflow" | "openrouter" | "deepseek"
                       )
                     }
                     disabled={isFetchingModels[key]}
-                    className="pixel-button text-xs px-3"
+                    className="text-xs px-3"
                     title={
                       key === "siliconflow" || key === "openrouter"
                         ? "从API获取最新模型列表"
@@ -398,7 +417,7 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                     ) : (
                       <Icon icon="dinkie-icons:adjustments" size={20} />
                     )}
-                  </button>
+                  </Button>
                 </div>
                 {defaultModels[key] && (
                   <div className="mt-1 text-xs text-green-400">
@@ -415,9 +434,9 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
               )}
 
               <div>
-                <label className="block text-sm font-mono text-gray-300 mb-1">
+                <Label className="block text-sm font-mono text-gray-300 mb-1">
                   可用模型 ({getModelList(key).length}个)
-                </label>
+                </Label>
                 <div className="text-xs text-gray-400 font-mono max-h-20 overflow-y-auto pixel-scrollbar">
                   {getModelList(key).map((model, index) => (
                     <div
@@ -450,12 +469,14 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
             自定义API提供商
           </h3>
           {!showCustomConfig ? (
-            <button
+            <Button
+              type="button"
+              variant="neonGreen"
               onClick={() => setShowCustomConfig(true)}
               className="pixel-button green"
             >
               添加自定义API
-            </button>
+            </Button>
           ) : null}
         </div>
 
@@ -467,10 +488,10 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
 
             {/* 提供商名称 */}
             <div>
-              <label className="block text-sm font-mono text-gray-300 mb-1">
+              <Label className="block text-sm font-mono text-gray-300 mb-1">
                 提供商名称
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={customProviderName}
                 onChange={(e) => setCustomProviderName(e.target.value)}
@@ -481,10 +502,10 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
 
             {/* Base URL */}
             <div>
-              <label className="block text-sm font-mono text-gray-300 mb-1">
+              <Label className="block text-sm font-mono text-gray-300 mb-1">
                 Base URL
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={customBaseUrl}
                 onChange={(e) => setCustomBaseUrl(e.target.value)}
@@ -495,10 +516,10 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
 
             {/* 模型列表 */}
             <div>
-              <label className="block text-sm font-mono text-gray-300 mb-1">
+              <Label className="block text-sm font-mono text-gray-300 mb-1">
                 支持的模型 (逗号分隔)
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={customModels}
                 onChange={(e) => setCustomModels(e.target.value)}
@@ -509,20 +530,23 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
 
             {/* API Key */}
             <div>
-              <label className="block text-sm font-mono text-gray-300 mb-1">
+              <Label className="block text-sm font-mono text-gray-300 mb-1">
                 API Key
-              </label>
+              </Label>
               <div className="flex">
-                <input
+                <Input
                   type={showKeys["custom"] ? "text" : "password"}
                   value={customApiKey}
                   onChange={(e) => setCustomApiKey(e.target.value)}
                   placeholder="输入自定义API的密钥"
                   className="pixel-input flex-1 rounded-r-none"
                 />
-                <button
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => toggleShowKey("custom")}
-                  className="px-3 py-2 bg-gray-700 border-2 border-l-0 border-gray-600 text-gray-300 hover:text-white transition-colors"
+                  className="px-3 py-2 bg-gray-700 border-2 border-l-0 border-gray-600 text-gray-300 hover:text-white transition-colors rounded-l-none"
                 >
                   {showKeys["custom"] ? (
                     <Icon
@@ -532,13 +556,15 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                   ) : (
                     <Icon icon="dinkie-icons:crescent-moon-filled" size={20} />
                   )}
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* 操作按钮 */}
             <div className="flex space-x-3">
-              <button
+              <Button
+                type="button"
+                variant="neonGreen"
                 onClick={() => {
                   if (!customProviderName.trim()) {
                     alert("请输入提供商名称");
@@ -568,8 +594,10 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                 className="pixel-button green flex-1"
               >
                 保存配置
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => {
                   setShowCustomConfig(false);
                   setCustomProviderName("");
@@ -580,7 +608,7 @@ const ApiConfig: React.FC<ApiConfigProps> = ({ apiKeys, onApiKeysChange }) => {
                 className="pixel-button flex-1"
               >
                 取消
-              </button>
+              </Button>
             </div>
 
             <div className="p-3 bg-blue-900 border border-blue-400 rounded text-blue-100 text-xs">

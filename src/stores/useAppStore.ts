@@ -1,115 +1,177 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { AICharacter, Conversation, CustomCharacterConfig } from '../types';
+import { persist, devtools } from 'zustand/middleware';
+import type { UIState } from './uiStore';
+import type { APIState } from './apiStore';
+import type { CharacterState } from './characterStore';
+import type { ConversationState } from './conversationStore';
 import { aiService } from '../services/aiService';
 import { conversationService } from '../services/conversationService';
 import { storageService } from '../services/storageService';
 
-interface AppState {
-  // UI状态
-  currentView: 'setup' | 'conversation';
-  setupView: 'api' | 'characters';
-  error: string | null;
+// 组合所有状态类型
+export type AppState = UIState & APIState & CharacterState & ConversationState;
 
-  // 业务状态
-  characters: AICharacter[];
-  currentConversation: Conversation | null;
-  allConversations: Conversation[];
-  apiKeys: Record<string, string>;
+// 组合所有动作类型
+export type AppActions = UIState & APIState & CharacterState & ConversationState;
 
-  // 加载状态
-  isLoading: boolean;
-  isProcessing: boolean;
-
-  // Actions - UI相关
-  setCurrentView: (view: 'setup' | 'conversation') => void;
-  setSetupView: (view: 'api' | 'characters') => void;
-  setError: (error: string | null) => void;
-
-  // Actions - 数据加载
-  loadUserConfig: () => void;
-  loadConversations: () => void;
-  saveUserConfig: () => void;
-
-  // Actions - 角色管理
-  addCharacter: (
-    presetIndex: number,
-    apiProvider: 'siliconflow' | 'openrouter' | 'deepseek' | 'custom',
-    model: string,
-    apiKey: string,
-    customBaseUrl?: string
-  ) => Promise<void>;
-  addCustomCharacter: (
-    config: CustomCharacterConfig,
-    apiProvider: 'siliconflow' | 'openrouter' | 'deepseek' | 'custom',
-    model: string,
-    apiKey: string,
-    customBaseUrl?: string
-  ) => Promise<void>;
-  updateCharacter: (
-    characterId: string,
-    config: CustomCharacterConfig,
-    apiProvider: 'siliconflow' | 'openrouter' | 'deepseek' | 'custom',
-    model: string,
-    apiKey: string
-  ) => Promise<void>;
-  updateCharacterApi: (
-    characterId: string,
-    apiProvider: 'siliconflow' | 'openrouter' | 'deepseek' | 'custom',
-    model: string,
-    apiKey: string
-  ) => void;
-  updateCharacterProp: (characterId: string, updates: Partial<AICharacter>) => void;
-  removeCharacter: (characterId: string) => void;
-  clearCharacters: () => void;
-
-  // Actions - API配置
-  setApiKeys: (keys: Record<string, string>) => void;
-
-  // Actions - 对话管理
-  startConversation: (topic: string) => Promise<void>;
-  processNextTurn: (conversation: Conversation) => Promise<void>;
-  toggleConversation: () => void;
-  resetConversation: () => void;
-  goBackToSetup: () => void;
-  loadConversation: (conversation: Conversation) => void;
-  deleteConversation: (id: string, e: React.MouseEvent) => void;
-}
-
-export const useAppStore = create<AppState>()(
+// 创建组合 Store
+export const useAppStore = create<AppState & AppActions>()(
   devtools(
     persist(
       (set, get) => ({
-        // 初始状态
+        // ==================== UI 状态 ====================
         currentView: 'setup',
         setupView: 'api',
         error: null,
-        characters: [],
-        currentConversation: null,
-        allConversations: [],
-        apiKeys: {},
         isLoading: false,
         isProcessing: false,
 
-        // Actions - UI相关
         setCurrentView: (view) => set({ currentView: view }),
         setSetupView: (view) => set({ setupView: view }),
         setError: (error) => set({ error }),
+        setIsLoading: (loading) => set({ isLoading: loading }),
+        setIsProcessing: (processing) => set({ isProcessing: processing }),
 
-        // Actions - 数据加载
+        // ==================== API 状态 ====================
+        apiKeys: {},
+        defaultModels: {},
+        dynamicModels: {},
+        isFetchingModels: {},
+        modelFetchError: {},
+
+        setApiKeys: (keys) => set({ apiKeys: keys }),
+        setDefaultModel: (provider, model) =>
+          set((state) => ({
+            ...state,
+            defaultModels: { ...state.defaultModels, [provider]: model }
+          })),
+        setDynamicModels: (provider, models) =>
+          set((state) => ({
+            ...state,
+            dynamicModels: { ...state.dynamicModels, [provider]: models }
+          })),
+        setIsFetchingModels: (provider, fetching) =>
+          set((state) => ({
+            ...state,
+            isFetchingModels: { ...state.isFetchingModels, [provider]: fetching }
+          })),
+        setModelFetchError: (provider, error) =>
+          set((state) => ({
+            ...state,
+            modelFetchError: { ...state.modelFetchError, [provider]: error }
+          })),
+        clearModelFetchError: (provider) =>
+          set((state) => ({
+            ...state,
+            modelFetchError: { ...state.modelFetchError, [provider]: null }
+          })),
+
+        // ==================== 角色状态 ====================
+        characters: [],
+
+        addCharacter: async (presetIndex, apiProvider, model, apiKey, customBaseUrl) => {
+          const state = get();
+          const { characters } = state;
+
+          if (characters.length >= 3) {
+            set((s) => ({ ...s, error: '最多只能选择3个AI角色' }));
+            return;
+          }
+
+          const { PRESET_CHARACTERS } = await import('../types');
+          const preset = PRESET_CHARACTERS[presetIndex];
+          const newCharacter: any = {
+            id: Date.now().toString() + Math.random().toString(36).slice(2),
+            ...preset,
+            apiProvider,
+            model,
+            apiKey,
+            customBaseUrl,
+            status: 'idle'
+          };
+
+          set((s) => ({
+            ...s,
+            characters: [...characters, newCharacter],
+          }));
+        },
+
+        addCustomCharacter: async (config, apiProvider, model, apiKey, customBaseUrl) => {
+          const state = get();
+          const { characters } = state;
+
+          if (characters.length >= 3) {
+            set((s) => ({ ...s, error: '最多只能选择3个AI角色' }));
+            return;
+          }
+
+          const newCharacter: any = {
+            id: Date.now().toString() + Math.random().toString(36).slice(2),
+            ...config,
+            apiProvider,
+            model,
+            apiKey,
+            customBaseUrl,
+            status: 'idle'
+          };
+
+          set((s) => ({
+            ...s,
+            characters: [...characters, newCharacter],
+          }));
+        },
+
+        updateCharacter: async (characterId, config, apiProvider, model, apiKey) => {
+          set((state) => ({
+            ...state,
+            characters: state.characters.map((c) =>
+              c.id === characterId
+                ? { ...c, ...config, apiProvider, model, apiKey }
+                : c
+            )
+          }));
+        },
+
+        updateCharacterApi: (characterId, apiProvider, model, apiKey) => {
+          set((state) => ({
+            ...state,
+            characters: state.characters.map((c) =>
+              c.id === characterId
+                ? { ...c, apiProvider, model, apiKey }
+                : c
+            )
+          }));
+        },
+
+        updateCharacterProp: (characterId, updates) => {
+          set((state) => ({
+            ...state,
+            characters: state.characters.map((c) =>
+              c.id === characterId ? { ...c, ...updates } : c
+            )
+          }));
+        },
+
+        removeCharacter: (characterId) => {
+          set((state) => ({
+            ...state,
+            characters: state.characters.filter((c) => c.id !== characterId)
+          }));
+        },
+
+        clearCharacters: () => {
+          set((state) => ({ ...state, characters: [] }));
+        },
+
         loadUserConfig: () => {
           const config = storageService.loadUserConfig();
           if (config) {
-            set({
+            set((state) => ({
+              ...state,
               apiKeys: config.apiKeys || {},
               characters: config.selectedCharacters || []
-            });
+            }));
           }
-        },
-
-        loadConversations: () => {
-          const conversations = storageService.getAllConversations();
-          set({ allConversations: conversations });
         },
 
         saveUserConfig: () => {
@@ -121,104 +183,33 @@ export const useAppStore = create<AppState>()(
           });
         },
 
-        // Actions - 角色管理
-        addCharacter: async (presetIndex, apiProvider, model, apiKey, customBaseUrl) => {
-          const { characters } = get();
+        // ==================== 对话状态 ====================
+        currentConversation: null,
+        allConversations: [],
 
-          if (characters.length >= 3) {
-            set({ error: '最多只能选择3个AI角色' });
-            return;
-          }
-
-          const { PRESET_CHARACTERS } = await import('../types');
-          const preset = PRESET_CHARACTERS[presetIndex];
-          const newCharacter: AICharacter = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2),
-            ...preset,
-            apiProvider,
-            model,
-            apiKey,
-            customBaseUrl,
-            status: 'idle'
-          };
-
-          set({
-            characters: [...characters, newCharacter],
-            error: null
-          });
-        },
-
-        addCustomCharacter: async (config, apiProvider, model, apiKey, customBaseUrl) => {
-          const { characters } = get();
-
-          if (characters.length >= 3) {
-            set({ error: '最多只能选择3个AI角色' });
-            return;
-          }
-
-          const newCharacter: AICharacter = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2),
-            ...config,
-            apiProvider,
-            model,
-            apiKey,
-            customBaseUrl,
-            status: 'idle'
-          };
-
-          set({
-            characters: [...characters, newCharacter],
-            error: null
-          });
-        },
-
-        updateCharacter: async (characterId, config, apiProvider, model, apiKey) => {
+        _handleConversationError: (error) => {
           set((state) => ({
+            ...state,
+            error: error instanceof Error ? error.message : '操作失败'
+          }));
+        },
+
+        _updateCharacterStatus: (characterId, status) => {
+          // 这个方法在实际使用时会被覆盖
+          set((state) => ({
+            ...state,
             characters: state.characters.map((c) =>
-              c.id === characterId
-                ? { ...c, ...config, apiProvider, model, apiKey }
-                : c
+              c.id === characterId ? { ...c, status } : c
             )
           }));
         },
 
-        updateCharacterApi: (characterId, apiProvider, model, apiKey) => {
-          set((state) => ({
-            characters: state.characters.map((c) =>
-              c.id === characterId
-                ? { ...c, apiProvider, model, apiKey }
-                : c
-            )
-          }));
-        },
-
-        updateCharacterProp: (characterId, updates) => {
-          set((state) => ({
-            characters: state.characters.map((c) =>
-              c.id === characterId ? { ...c, ...updates } : c
-            )
-          }));
-        },
-
-        removeCharacter: (characterId) => {
-          set((state) => ({
-            characters: state.characters.filter((c) => c.id !== characterId)
-          }));
-        },
-
-        clearCharacters: () => {
-          set({ characters: [] });
-        },
-
-        // Actions - API配置
-        setApiKeys: (keys) => set({ apiKeys: keys }),
-
-        // Actions - 对话管理
         startConversation: async (topic) => {
-          const { characters, saveUserConfig } = get();
+          const state = get();
+          const { characters } = state;
 
           if (characters.length === 0) {
-            set({ error: '请先选择至少一个AI角色' });
+            set((s) => ({ ...s, error: '请先选择至少一个AI角色' }));
             return;
           }
 
@@ -235,11 +226,11 @@ export const useAppStore = create<AppState>()(
           });
 
           if (!validation.isValid) {
-            set({ error: validation.errors.join('\n') });
+            set((s) => ({ ...s, error: validation.errors.join('\n') }));
             return;
           }
 
-          set({ isLoading: true, error: null });
+          set((s) => ({ ...s, isLoading: true, error: null }));
 
           try {
             // 测试所有API连接
@@ -260,13 +251,14 @@ export const useAppStore = create<AppState>()(
             const conversation = conversationService.createConversation(topic, characters);
             const startedConversation = conversationService.startConversation(conversation);
 
-            set({
+            set((s) => ({
+              ...s,
               currentConversation: startedConversation,
               currentView: 'conversation'
-            });
+            }));
 
             // 保存配置
-            saveUserConfig();
+            get().saveUserConfig();
 
             // 开始第一轮对话
             setTimeout(() => {
@@ -274,44 +266,47 @@ export const useAppStore = create<AppState>()(
             }, 1000);
           } catch (error) {
             console.error('开始对话失败:', error);
-            set({
+            set((s) => ({
+              ...s,
               error: error instanceof Error ? error.message : '开始对话失败'
-            });
+            }));
           } finally {
-            set({ isLoading: false });
+            set((s) => ({ ...s, isLoading: false }));
           }
         },
 
         processNextTurn: async (conversation) => {
-          const { isProcessing } = get();
-          if (!conversation.isActive || isProcessing) return;
+          const state = get();
+          if (!conversation.isActive || state.isProcessing) return;
 
           // 限制最大轮数
           if (conversation.round >= 10) {
             console.log('已达到最大轮数限制，对话结束');
-            set((state) => ({
-              currentConversation: state.currentConversation
-                ? { ...state.currentConversation, isActive: false }
+            set((s) => ({
+              ...s,
+              currentConversation: s.currentConversation
+                ? { ...s.currentConversation, isActive: false }
                 : null,
               isProcessing: false
             }));
             return;
           }
 
-          set({ isProcessing: true });
+          set((s) => ({ ...s, isProcessing: true }));
 
           try {
             const nextSpeaker = conversationService.getNextSpeaker(conversation);
 
             if (!nextSpeaker) {
               console.log('没有可用的发言者');
-              set({ isProcessing: false });
+              set((s) => ({ ...s, isProcessing: false }));
               return;
             }
 
             // 更新角色状态
-            set((state) => ({
-              characters: state.characters.map((c) =>
+            set((s) => ({
+              ...s,
+              characters: s.characters.map((c) =>
                 c.id === nextSpeaker.id
                   ? { ...c, status: 'thinking' as const }
                   : c
@@ -341,11 +336,12 @@ export const useAppStore = create<AppState>()(
               ...conversation,
               currentSpeakingMessage: tempMessage
             };
-            set({ currentConversation: tempConversation });
+            set((s) => ({ ...s, currentConversation: tempConversation }));
 
             // 更新角色状态为说话中
-            set((state) => ({
-              characters: state.characters.map((c) =>
+            set((s) => ({
+              ...s,
+              characters: s.characters.map((c) =>
                 c.id === nextSpeaker.id
                   ? { ...c, status: 'speaking' as const }
                   : c
@@ -371,7 +367,7 @@ export const useAppStore = create<AppState>()(
                   ...tempConversation,
                   currentSpeakingMessage: updatedTempMessage
                 };
-                set({ currentConversation: updatedTempConversation });
+                set((s) => ({ ...s, currentConversation: updatedTempConversation }));
               },
               nextSpeaker.customBaseUrl,
               nextSpeaker.model ? [nextSpeaker.model] : undefined
@@ -405,7 +401,7 @@ export const useAppStore = create<AppState>()(
               };
             }
 
-            set({ currentConversation: finalConv });
+            set((s) => ({ ...s, currentConversation: finalConv }));
 
             // 保存对话
             storageService.saveConversation(finalConv);
@@ -413,8 +409,9 @@ export const useAppStore = create<AppState>()(
 
             // 更新角色状态为闲置
             setTimeout(() => {
-              set((state) => ({
-                characters: state.characters.map((c) =>
+              set((s) => ({
+                ...s,
+                characters: s.characters.map((c) =>
                   c.id === nextSpeaker.id
                     ? { ...c, status: 'idle' as const }
                     : c
@@ -433,8 +430,9 @@ export const useAppStore = create<AppState>()(
             console.error('处理对话轮次失败:', error);
 
             // 更新角色状态为错误
-            set((state) => ({
-              characters: state.characters.map((c) =>
+            set((s) => ({
+              ...s,
+              characters: s.characters.map((c) =>
                 c.status === 'thinking'
                   ? { ...c, status: 'error' as const }
                   : c
@@ -442,24 +440,27 @@ export const useAppStore = create<AppState>()(
             }));
 
             // 清除当前说话消息
-            set((state) => ({
-              currentConversation: state.currentConversation
+            set((s) => ({
+              ...s,
+              currentConversation: s.currentConversation
                 ? {
-                    ...state.currentConversation,
+                    ...s.currentConversation,
                     currentSpeakingMessage: undefined
                   }
                 : null
             }));
 
-            set({
+            set((s) => ({
+              ...s,
               error: error instanceof Error ? error.message : '处理对话失败',
               isProcessing: false
-            });
+            }));
           }
         },
 
         toggleConversation: () => {
-          const { currentConversation, isProcessing } = get();
+          const state = get();
+          const { currentConversation } = state;
           if (!currentConversation) return;
 
           const isCurrentlyActive = currentConversation.isActive;
@@ -468,10 +469,10 @@ export const useAppStore = create<AppState>()(
             ? conversationService.pauseConversation(currentConversation)
             : conversationService.startConversation(currentConversation);
 
-          set({ currentConversation: updatedConversation });
+          set((s) => ({ ...s, currentConversation: updatedConversation }));
 
           // 只有在当前不活跃且不在处理中时才继续
-          if (!isCurrentlyActive && !isProcessing) {
+          if (!isCurrentlyActive && !state.isProcessing) {
             setTimeout(() => {
               get().processNextTurn(updatedConversation);
             }, 500);
@@ -479,40 +480,40 @@ export const useAppStore = create<AppState>()(
         },
 
         resetConversation: () => {
-          const { currentConversation } = get();
+          const state = get();
+          const { currentConversation } = state;
           if (!currentConversation) return;
 
           const resetConv = conversationService.resetConversation(currentConversation);
-          set({
+          set((s) => ({
+            ...s,
             currentConversation: resetConv,
             characters: get().characters.map((c) => ({ ...c, status: 'idle' as const })),
             error: null
-          });
+          }));
         },
 
         goBackToSetup: () => {
-          set({
+          set((s) => ({
+            ...s,
             currentView: 'setup',
             setupView: 'api',
             currentConversation: null,
             characters: [],
             error: null
-          });
+          }));
         },
 
         loadConversation: (conversation) => {
-          set({
-            currentConversation: conversation,
-            currentView: 'conversation'
-          });
+          // 使用对话对象中的角色数据，而不是从用户配置中加载
+          const conversationCharacters = conversation.characters || [];
 
-          // 重新加载角色数据
-          const config = storageService.loadUserConfig();
-          if (config?.selectedCharacters) {
-            set({
-              characters: config.selectedCharacters.map((c) => ({ ...c, status: 'idle' as const }))
-            });
-          }
+          set((s) => ({
+            ...s,
+            currentConversation: conversation,
+            currentView: 'conversation',
+            characters: conversationCharacters.map((c: any) => ({ ...c, status: 'idle' as const }))
+          }));
         },
 
         deleteConversation: (id, e) => {
@@ -526,14 +527,21 @@ export const useAppStore = create<AppState>()(
               get().goBackToSetup();
             }
           }
-        }
+        },
+
+        loadConversations: () => {
+          const conversations = storageService.getAllConversations();
+          set((s) => ({ ...s, allConversations: conversations }));
+        },
       }),
       {
         name: 'ai-conference-storage',
         partialize: (state) => ({
           apiKeys: state.apiKeys,
-          characters: state.characters
-        })
+          characters: state.characters,
+          defaultModels: state.defaultModels,
+          dynamicModels: state.dynamicModels,
+        }),
       }
     ),
     { name: 'app-store' }

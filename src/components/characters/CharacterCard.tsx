@@ -1,7 +1,10 @@
 import React from 'react';
 import { AICharacter } from '../../types';
 import { API_PROVIDERS } from '../../types/apiProviders';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
 
 interface CharacterCardProps {
   character: AICharacter;
@@ -11,18 +14,18 @@ interface CharacterCardProps {
 const CharacterCard: React.FC<CharacterCardProps> = ({ character, onEdit }) => {
   const { removeCharacter } = useAppStore();
 
-  const getStatusColor = (status: AICharacter['status']) => {
+  const getStatusBadgeVariant = (status: AICharacter['status']): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'idle':
-        return 'text-gray-400';
+        return 'secondary';
       case 'thinking':
-        return 'text-neon-yellow';
+        return 'default';
       case 'speaking':
-        return 'text-neon-cyan';
+        return 'default';
       case 'error':
-        return 'text-red-400';
+        return 'destructive';
       default:
-        return 'text-gray-400';
+        return 'outline';
     }
   };
 
@@ -46,58 +49,61 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character, onEdit }) => {
   };
 
   return (
-    <div className='bg-gray-900 border border-gray-600 p-4 rounded-lg'>
-      <div className='flex items-center justify-between mb-3'>
-        <div className='flex items-center space-x-3'>
-          <div
-            className='character-avatar'
-            style={{ borderColor: character.color }}
-          >
-            {character.avatar}
-          </div>
-          <div>
-            <h4 className='font-bold text-white'>{character.name}</h4>
-            <div className='flex items-center space-x-2'>
-              <div className={`status-indicator ${character.status}`}></div>
-              <span className={`text-xs ${getStatusColor(character.status)}`}>
+    <Card className='bg-gray-900 border-gray-700'>
+      <CardHeader className='pb-3'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center space-x-3'>
+            <div
+              className='character-avatar'
+              style={{ borderColor: character.color }}
+            >
+              {character.avatar}
+            </div>
+            <div>
+              <CardTitle className='text-lg text-white'>{character.name}</CardTitle>
+              <Badge variant={getStatusBadgeVariant(character.status)} className='mt-1'>
                 {getStatusText(character.status)}
-              </span>
+              </Badge>
             </div>
           </div>
+          <div className='flex space-x-2'>
+            <Button
+              onClick={() => onEdit(character.id)}
+              variant='neonYellow'
+              size='sm'
+            >
+              编辑
+            </Button>
+            <Button
+              onClick={() => removeCharacter(character.id)}
+              variant='neonPink'
+              size='sm'
+            >
+              移除
+            </Button>
+          </div>
         </div>
-        <div className='flex space-x-2'>
-          <button
-            onClick={() => onEdit(character.id)}
-            className='pixel-button yellow text-xs px-2 py-1'
-          >
-            编辑
-          </button>
-          <button
-            onClick={() => removeCharacter(character.id)}
-            className='pixel-button pink text-xs px-2 py-1'
-          >
-            移除
-          </button>
-        </div>
-      </div>
+      </CardHeader>
 
-      <div className='space-y-2 text-sm'>
-        <div>
-          <span className='text-gray-400'>性格:</span>
-          <span className='text-white ml-1'>{character.personality}</span>
+      <CardContent className='pt-0'>
+        <div className='space-y-2 text-sm'>
+          <div>
+            <span className='text-gray-400'>性格:</span>
+            <span className='text-white ml-1'>{character.personality}</span>
+          </div>
+          <div>
+            <span className='text-gray-400'>提供商:</span>
+            <span className='text-cyan-400 ml-1'>{getProviderName(character.apiProvider)}</span>
+          </div>
+          <div>
+            <span className='text-gray-400'>模型:</span>
+            <span className='text-yellow-400 ml-1 font-mono text-xs'>
+              {character.model}
+            </span>
+          </div>
         </div>
-        <div>
-          <span className='text-gray-400'>提供商:</span>
-          <span className='text-cyan-400 ml-1'>{getProviderName(character.apiProvider)}</span>
-        </div>
-        <div>
-          <span className='text-gray-400'>模型:</span>
-          <span className='text-yellow-400 ml-1 font-mono text-xs'>
-            {character.model}
-          </span>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

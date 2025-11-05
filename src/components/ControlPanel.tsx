@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore } from '@/stores/useAppStore';
 
 const ControlPanel: React.FC = () => {
   const { characters, startConversation, isLoading } = useAppStore();
