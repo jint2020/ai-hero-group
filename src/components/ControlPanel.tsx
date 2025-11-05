@@ -75,8 +75,8 @@ const ControlPanel: React.FC = () => {
   ];
 
   return (
-    <div className='bg-gray-800 border-2 border-cyan-400 p-6 rounded-lg neon-border'>
-      <h2 className='text-xl font-bold text-neon-cyan mb-4 flex items-center'>
+    <div className='bg-gray-800 border-2 border-cyan-400 p-4 md:p-6 rounded-lg neon-border'>
+      <h2 className='text-lg md:text-xl font-bold text-neon-cyan mb-4 flex items-center'>
         <span className='mr-2'>🎮</span>
         对话控制台
       </h2>

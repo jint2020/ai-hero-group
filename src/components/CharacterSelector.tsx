@@ -11,9 +11,9 @@ const CharacterSelector: React.FC = () => {
   const [editingCharacterId, setEditingCharacterId] = useState<string | null>(null);
 
   return (
-    <div className='bg-gray-800 border-2 border-cyan-400 p-6 rounded-lg neon-border'>
+    <div className='bg-gray-800 border-2 border-cyan-400 p-4 md:p-6 rounded-lg neon-border'>
       <div className='flex items-center justify-between mb-4'>
-        <h2 className='text-xl font-bold text-neon-cyan flex items-center'>
+        <h2 className='text-lg md:text-xl font-bold text-neon-cyan flex items-center'>
           <span className='mr-2'>🤖</span>
           AI角色选择
         </h2>
@@ -63,7 +63,7 @@ const CharacterSelector: React.FC = () => {
               }}
             />
           ) : (
-            <div className='flex space-x-2'>
+            <div className='flex flex-col sm:flex-row gap-2'>
               <button
                 onClick={() => setShowAddForm(true)}
                 className='pixel-button green'

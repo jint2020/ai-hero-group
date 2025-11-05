@@ -91,10 +91,10 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <div className="bg-gray-800 border-2 border-cyan-400 p-6 rounded-lg neon-border">
+    <div className="bg-gray-800 border-2 border-cyan-400 p-4 md:p-6 rounded-lg neon-border">
       <div className="flex items-center justify-between mb-4">
-        <h2 className='text-xl font-bold text-neon-cyan'>对话记录</h2>
-        <div className='text-sm text-gray-400'>
+        <h2 className='text-lg md:text-xl font-bold text-neon-cyan'>对话记录</h2>
+        <div className='text-xs md:text-sm text-gray-400'>
           {conversation.messages.length} 条消息
           {conversation.currentSpeakingMessage && ' (+1 正在输入)'}
         </div>
@@ -103,7 +103,7 @@ const MessageList: React.FC<MessageListProps> = ({
       <div className='relative'>
         <div
           ref={messagesContainerRef}
-          className='space-y-4 max-h-96 overflow-y-auto pixel-scrollbar'
+          className='space-y-3 md:space-y-4 max-h-80 md:max-h-96 overflow-y-auto pixel-scrollbar'
         >
           {conversation.messages.length === 0 && !conversation.currentSpeakingMessage ? (
             <div className='text-center text-gray-500 py-8'>

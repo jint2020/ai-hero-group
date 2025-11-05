@@ -1,14 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import ConversationView from './ConversationView';
 
-const ConversationLayout: React.FC = () => {
+const Layout: React.FC = () => {
   const { allConversations, currentConversation, loadConversation, deleteConversation, goBackToSetup } = useAppStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full relative">
+      {/* 移动端遮罩层 */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* 左侧侧边栏 - 对话记录 */}
-      <aside className="w-1/3 bg-gray-800 border-r-2 border-cyan-400 flex flex-col">
+      <aside
+        className={`
+          fixed lg:relative top-0 left-0 h-full
+          w-80 max-w-[85vw] bg-gray-800 border-r-2 border-cyan-400 flex flex-col
+          transform transition-transform duration-300 ease-in-out z-50
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
         {/* 侧边栏标题 */}
         <div className="bg-gray-900 border-b border-gray-600 p-4">
           <h1 className="text-xl font-bold text-neon-cyan flicker">
@@ -70,11 +86,24 @@ const ConversationLayout: React.FC = () => {
           </div>
         </div>
 
+        {/* 移动端侧边栏头部 */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-600">
+          <span className="text-sm font-bold text-gray-300">对话记录</span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="text-gray-400 hover:text-white"
+            aria-label="关闭侧边栏"
+          >
+            ✕
+          </button>
+        </div>
+
         {/* 侧边栏按钮组 */}
         <div className="p-4 border-t border-gray-600 space-y-3">
           <button
             onClick={() => {
               goBackToSetup();
+              setSidebarOpen(false);
             }}
             className="pixel-button yellow w-full"
           >
@@ -87,10 +116,10 @@ const ConversationLayout: React.FC = () => {
       </aside>
 
       {/* 右侧主内容区 - 对话视图 */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden flex-grow">
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto p-6">
-            <ConversationView />
+          <div className="max-w-5xl mx-auto p-4 md:p-6">
+            <ConversationView onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
           </div>
         </div>
       </main>
@@ -98,4 +127,4 @@ const ConversationLayout: React.FC = () => {
   );
 };
 
-export default ConversationLayout;
+export default Layout;
