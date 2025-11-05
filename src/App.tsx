@@ -445,7 +445,7 @@ function App() {
               之
             </div>
             <div className="text-neon-green text-xs mt-1">
-              我的兄弟叫AI
+              我的对手竟然是AI
             </div>
           </div>
 
