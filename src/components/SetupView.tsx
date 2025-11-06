@@ -10,13 +10,12 @@ import Sidebar from './Sidebar';
 const SetupView: React.FC = () => {
   const { setupView, apiKeys, setApiKeys } = useAppStore();
   const [sidebarOpen, setSidebarOpen] = useState(true); // 桌面端默认显示
-  const { sidebarWidth, updateSidebarWidth } = useSidebarWidth();
+  const { updateSidebarWidth, getCurrentWidth } = useSidebarWidth();
 
   const leftContent = (
     <Sidebar
       sidebarOpen={sidebarOpen}
       onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-      sidebarWidth={sidebarWidth}
       context="setup"
     />
   );
@@ -73,7 +72,7 @@ const SetupView: React.FC = () => {
         leftContent={leftContent}
         rightContent={rightContent}
         onResize={updateSidebarWidth}
-        initialWidth={sidebarWidth}
+        initialWidth={getCurrentWidth()}
         minWidth={200}
         maxWidth={600}
         sidebarOpen={sidebarOpen}

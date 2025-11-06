@@ -4,15 +4,12 @@ import { useAppStore } from "@/stores/useAppStore";
 interface SidebarProps {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
-  sidebarWidth: number;
   context: "setup" | "conversation";
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   sidebarOpen,
   onToggleSidebar,
-  sidebarWidth,
-  context,
 }) => {
   const {
     allConversations,
@@ -48,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           lg:translate-x-0
         `}
         style={{
-          width: `${sidebarWidth}px`,
+          width: "var(--sidebar-width)",
         }}
       >
         <div className="flex flex-col h-full" style={{ width: "100%" }}>

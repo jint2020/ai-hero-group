@@ -76,22 +76,33 @@ const ResizablePanelGroup: React.FC<ResizablePanelGroupProps> = ({
   // 根据屏幕尺寸渲染不同布局
   if (isMobile) {
     // 移动端布局：同时渲染主内容和侧边栏，由Sidebar自己控制显示
-    // 限制Sidebar宽度避免溢出：不超过屏幕宽度的85%，最小200px
+    // 在移动端使用约束宽度（不超过屏幕宽度的85%，最小200px）
     const maxAllowedWidth = Math.floor(totalWidth * 0.85);
     const constrainedWidth = Math.min(initialWidth, Math.max(minWidth, maxAllowedWidth));
+    // 在移动端临时设置CSS变量以限制宽度
+    const originalStyle = document.documentElement.style.getPropertyValue('--sidebar-width');
+    document.documentElement.style.setProperty('--sidebar-width', `${constrainedWidth}px`);
 
-    return (
+    const result = (
       <div className="h-full w-full relative">
         <div className="h-full w-full">
           {rightContent}
         </div>
         {React.cloneElement(leftContent as React.ReactElement, {
-          sidebarWidth: constrainedWidth,
           sidebarOpen,
           onToggleSidebar
         })}
       </div>
     );
+
+    // 恢复原始宽度
+    if (originalStyle) {
+      document.documentElement.style.setProperty('--sidebar-width', originalStyle);
+    } else {
+      document.documentElement.style.removeProperty('--sidebar-width');
+    }
+
+    return result;
   }
 
   // 桌面端布局：使用 ResizablePanelGroup
