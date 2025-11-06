@@ -60,10 +60,21 @@ const ResizablePanelGroup: React.FC<ResizablePanelGroupProps> = ({
     }
   };
 
-  const defaultSizePercentage = Math.min(
-    100,
-    Math.max(0, (initialWidth / totalWidth) * 100)
-  );
+  // Get percentage from CSS variable, fallback to initialWidth
+  const getInitialPercentage = () => {
+    if (typeof document !== 'undefined') {
+      const cssValue = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width-percentage');
+      if (cssValue) {
+        const percentage = parseFloat(cssValue);
+        if (!isNaN(percentage) && percentage >= 0) {
+          return percentage;
+        }
+      }
+    }
+    return Math.min(100, Math.max(0, (initialWidth / totalWidth) * 100));
+  };
+
+  const defaultSizePercentage = getInitialPercentage();
   const minSizePercentage = Math.min(
     100,
     Math.max(0, (minWidth / totalWidth) * 100)
@@ -73,36 +84,44 @@ const ResizablePanelGroup: React.FC<ResizablePanelGroupProps> = ({
     Math.max(0, (maxWidth / totalWidth) * 100)
   );
 
+  // Watch for CSS variable changes and update width
+  React.useEffect(() => {
+    const updateWidthFromCSSVariable = () => {
+      const cssValue = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width-percentage');
+      if (cssValue) {
+        const percentage = parseFloat(cssValue);
+        if (!isNaN(percentage) && percentage >= 0) {
+          const pixelWidth = (percentage / 100) * totalWidth;
+          onResize(Math.round(pixelWidth));
+        }
+      }
+    };
+
+    // Observe CSS variable changes
+    if (typeof MutationObserver !== 'undefined') {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            updateWidthFromCSSVariable();
+          }
+        });
+      });
+
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['style']
+      });
+
+      return () => {
+        observer.disconnect();
+      };
+    }
+  }, [onResize, totalWidth]);
+
   // 根据屏幕尺寸渲染不同布局
   if (isMobile) {
-    // 移动端布局：同时渲染主内容和侧边栏，由Sidebar自己控制显示
-    // 在移动端使用约束宽度（不超过屏幕宽度的85%，最小200px）
-    const maxAllowedWidth = Math.floor(totalWidth * 0.85);
-    const constrainedWidth = Math.min(initialWidth, Math.max(minWidth, maxAllowedWidth));
-    // 在移动端临时设置CSS变量以限制宽度
-    const originalStyle = document.documentElement.style.getPropertyValue('--sidebar-width');
-    document.documentElement.style.setProperty('--sidebar-width', `${constrainedWidth}px`);
-
-    const result = (
-      <div className="h-full w-full relative">
-        <div className="h-full w-full">
-          {rightContent}
-        </div>
-        {React.cloneElement(leftContent as React.ReactElement, {
-          sidebarOpen,
-          onToggleSidebar
-        })}
-      </div>
-    );
-
-    // 恢复原始宽度
-    if (originalStyle) {
-      document.documentElement.style.setProperty('--sidebar-width', originalStyle);
-    } else {
-      document.documentElement.style.removeProperty('--sidebar-width');
-    }
-
-    return result;
+    // 移动端布局：直接渲染右侧内容，AppSidebar 自己处理显示
+    return <div className="h-full w-full">{rightContent}</div>;
   }
 
   // 桌面端布局：使用 ResizablePanelGroup

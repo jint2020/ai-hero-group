@@ -30,15 +30,29 @@ export const useSidebarWidth = () => {
     updateCSSVariable(storedWidth);
   }
 
-  const updateSidebarWidth = (width: number) => {
+  const updateSidebarWidth = (width: number, open?: boolean) => {
     const clampedWidth = Math.min(Math.max(width, MIN_WIDTH), MAX_WIDTH);
     updateCSSVariable(clampedWidth);
     localStorage.setItem(SIDEBAR_WIDTH_KEY, clampedWidth.toString());
+
+    // Calculate percentage for ResizablePanelGroup
+    if (typeof window !== 'undefined') {
+      const windowWidth = window.innerWidth;
+      let percentage = (clampedWidth / windowWidth) * 100;
+
+      // If sidebar is closed on mobile, set to 0
+      if (open === false && windowWidth < 1024) {
+        percentage = 0;
+      }
+
+      document.documentElement.style.setProperty('--sidebar-width-percentage', `${percentage}%`);
+    }
   };
 
   const resetSidebarWidth = () => {
     updateCSSVariable(DEFAULT_WIDTH);
     localStorage.removeItem(SIDEBAR_WIDTH_KEY);
+    document.documentElement.style.setProperty('--sidebar-width-percentage', '20%');
   };
 
   // 提供获取当前宽度的方法（从CSS变量或localStorage）
